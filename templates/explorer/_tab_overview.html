@@ -1,0 +1,96 @@
+{% if detail.key_metrics %}
+<div class="as-metric-grid">
+  {% for metric in detail.key_metrics %}
+  {% with category=metric.kind %}
+  <div class="as-metric-card{% if metric.value is None %} as-metric--loading{% endif %}">
+    <span class="as-metric-category as-metric-category--{% if category == 'money' %}valuation{% elif category == 'percent' %}profitability{% elif category == 'ratio' %}health{% else %}trading{% endif %}">
+      {% if category == 'money' %}Valuation{% elif category == 'percent' %}Profitability{% elif category == 'ratio' %}Financial Health{% else %}Trading{% endif %}
+    </span>
+    <div class="as-metric-label">{{ metric.label }}</div>
+    <div class="as-metric-value{% if metric.value is None %} as-metric-value--empty{% endif %}">
+      {% if metric.value %}
+        {{ metric.value }}
+      {% else %}
+        <span class="as-metric-empty">
+          <span class="as-spinner" aria-hidden="true"></span>
+          Not available
+        </span>
+        <button type="button" class="as-metric-refresh" data-action="refresh-metric" data-field="{{ metric.raw|default:'none' }}" title="Refresh {{ metric.label }}">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      {% endif %}
+    </div>
+  </div>
+  {% endwith %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="h6 text-muted">Returns</h2>
+    {% if detail.returns_strip %}
+    <div class="d-flex flex-wrap gap-3">
+      {% for item in detail.returns_strip %}
+      <div class="text-center">
+        <div class="small text-muted">{{ item.period }}</div>
+        <div class="fw-semibold {% if item.return_pct is None %}text-muted{% elif item.return_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {% if item.return_pct is None %}—
+          {% elif item.return_pct >= 0 %}▲ +{{ item.return_pct|floatformat:2 }}%
+          {% else %}▼ {{ item.return_pct|floatformat:2 }}%{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">Not enough history to calculate returns.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 text-muted">About</h2>
+        {% if company.description %}
+        <p class="small mb-0">{{ company.description }}</p>
+        {% else %}
+        <p class="small text-muted mb-0">Business description not available yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Latest signal</h2>
+        {% if detail.signals %}
+          {% with signal=detail.signals.0 %}
+          <span class="badge {% if signal.signal_type == 'BULLISH' %}text-bg-success{% else %}text-bg-danger{% endif %}">
+            {% if signal.signal_type == 'BULLISH' %}▲ BULLISH{% else %}▼ BEARISH{% endif %}
+          </span>
+          <span class="small text-muted ms-2">{{ signal.crossover_date }} · close {{ signal.close_price }}</span>
+          <div class="small text-muted mt-1">SMA {{ signal.short_period }} / SMA {{ signal.long_period }}</div>
+          {% endwith %}
+        {% else %}
+        <p class="small text-muted mb-0">No crossover signals stored for this company.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h6 text-muted mb-0">Price chart</h2>
+    <a href="?tab=chart" class="btn btn-sm btn-outline-primary">Open chart</a>
+  </div>
+  <div style="height: 360px;">
+    <div class="as-chart-card" data-chart-workspace
+         data-symbol="{{ company.nse_code }}"
+         data-api-base="{% url 'visualization:chart_payload' company.nse_code %}">
+      <div class="as-chart-container" data-chart-canvas></div>
+    </div>
+  </div>
+</div>

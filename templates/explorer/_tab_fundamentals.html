@@ -1,0 +1,45 @@
+{% if detail.metrics %}
+<div class="d-flex align-items-center gap-2 mb-3 small text-muted">
+  <span class="badge text-bg-light">Source: {{ detail.metrics.source }}</span>
+  <span>Fetched {{ detail.metrics.fetched_at }}</span>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  {% for group, metrics in detail.fundamentals.items %}
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 text-muted">{{ group }}</h2>
+        <table class="table table-sm mb-0">
+          <tbody>
+            {% for metric in metrics %}
+            <tr>
+              <td class="text-muted">{{ metric.label }}</td>
+              <td class="text-end">
+                {% if metric.value %}
+                  {{ metric.value }}
+                {% else %}
+                  <span class="as-fundamentals-empty">
+                    Not available
+                    <button type="button" class="as-metric-refresh ms-2" data-action="refresh-metric" data-field="{{ metric.raw|default:'none' }}" title="Refresh {{ metric.label }}">
+                      <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not detail.metrics %}
+<div class="alert alert-light border text-muted mt-3">
+  Fundamentals not available yet. Fetch a metrics snapshot from Market Data.
+</div>
+{% endif %}

@@ -1,0 +1,693 @@
+:root {
+  --as-bg: #f6f8fb;
+  --as-surface: #ffffff;
+  --as-border: #e3e8ef;
+  --as-text: #0f172a;
+  --as-muted: #64748b;
+  --as-primary: #2563eb;
+  --as-bull: #16a34a;
+  --as-bear: #dc2626;
+  --as-warn: #d97706;
+}
+
+:root[data-bs-theme="dark"] {
+  --as-bg: #0b1220;
+  --as-surface: #111a2e;
+  --as-border: #1f2a44;
+  --as-text: #e6ebf5;
+  --as-muted: #94a3b8;
+  --as-primary: #4c8dff;
+  --as-bull: #22c55e;
+  --as-bear: #f87171;
+  --as-warn: #fbbf24;
+}
+
+body {
+  background-color: var(--as-bg);
+  color: var(--as-text);
+}
+
+.as-sidebar {
+  width: 240px;
+  background: var(--as-surface);
+  border-color: var(--as-border) !important;
+}
+
+.as-content,
+.card,
+header,
+footer {
+  background: var(--as-surface);
+  border-color: var(--as-border) !important;
+}
+
+.nav-link {
+  color: var(--as-muted);
+}
+
+.nav-link.active,
+.nav-link:hover {
+  color: var(--as-primary);
+}
+
+@media (max-width: 991px) {
+  .as-sidebar {
+    width: 72px;
+  }
+
+  .as-sidebar h1 {
+    font-size: 0;
+    margin: 0;
+  }
+
+  .as-sidebar .nav-link {
+    font-size: 0;
+    position: relative;
+    min-height: 36px;
+  }
+}
+
+/* --- Chart workspace (Phase 10 / ARCHITECTURE §13) --- */
+.as-chart-card {
+  background: var(--as-surface);
+  border: 1px solid var(--as-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.as-chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--as-border);
+  overflow-x: auto;
+}
+
+.as-chart-toolbar .btn-group .btn {
+  padding: 0.25rem 0.6rem;
+}
+
+.as-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.as-toolbar-group--always {
+  flex-shrink: 0;
+}
+
+.as-toolbar-group--collapse {
+  border: 1px solid var(--as-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--as-bg);
+}
+
+.as-toolbar-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--as-muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.as-toolbar-summary i {
+  font-size: 0.9rem;
+  color: var(--as-primary);
+}
+
+.as-toolbar-summary::-webkit-details-marker {
+  display: none;
+}
+
+.as-toolbar-summary::marker {
+  content: "";
+}
+
+.as-toolbar-group--collapse[open] .as-toolbar-summary {
+  border-bottom: 1px solid var(--as-border);
+  color: var(--as-text);
+}
+
+.as-toolbar-group--collapse > div,
+.as-toolbar-group--collapse > .d-flex {
+  padding: 0.4rem 0.75rem 0.5rem;
+}
+
+.as-chart-container {
+  position: relative;
+  height: 60vh;
+  min-height: 420px;
+}
+
+.as-chart-container > div {
+  height: 100%;
+}
+
+.as-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--as-muted);
+  border-top: 1px solid var(--as-border);
+}
+
+.as-chart-legend .swatch {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 0.15rem;
+  vertical-align: middle;
+  margin-right: 0.3rem;
+}
+
+.as-chart-table {
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.as-attribution {
+  font-size: 0.6875rem;
+  color: var(--as-muted);
+  text-align: right;
+  padding: 0.15rem 0.5rem;
+}
+
+/* --- Chart tools overlays (V5–V7) --- */
+
+/* Full-size layer painted over the canvas; tools drop absolutely-positioned nodes into it. */
+.as-overlay-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.as-pin-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--as-warn);
+  border: 2px solid var(--as-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--as-warn) 35%, transparent);
+  box-sizing: border-box;
+}
+
+.as-measure-box {
+  position: absolute;
+  background: color-mix(in srgb, var(--as-primary) 15%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--as-primary) 70%, transparent);
+}
+
+.as-measure-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin-left: -3px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--as-primary);
+}
+
+.as-range-band {
+  position: absolute;
+  background: color-mix(in srgb, var(--as-primary) 12%, transparent);
+  border-left: 1px dashed color-mix(in srgb, var(--as-primary) 70%, transparent);
+  border-right: 1px dashed color-mix(in srgb, var(--as-primary) 70%, transparent);
+}
+
+/* Marker popover (V8) — a direct child of the container, so reset the 100% height rule. */
+.as-marker-popover {
+  position: absolute;
+  z-index: 10;
+  height: auto !important;
+  min-width: 9rem;
+  max-width: 13rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--as-surface);
+  border: 1px solid var(--as-border);
+  border-radius: 0.375rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.18);
+  font-size: 0.8125rem;
+  pointer-events: auto;
+}
+
+.as-marker-popover-title {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+/* Pins list (V5) */
+.as-chart-pins {
+  font-size: 0.8125rem;
+  color: var(--as-muted);
+  min-height: 2rem;
+}
+
+.as-pin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  background: var(--as-bg);
+  border: 1px solid var(--as-border);
+  border-radius: 0.75rem;
+  padding: 0 0.4rem;
+  margin-right: 0.3rem;
+  color: var(--as-text);
+}
+
+.as-pin-chip .btn-close {
+  transform: scale(0.6);
+  margin-left: 0;
+}
+
+.as-tool-readout {
+  font-weight: 500;
+  color: var(--as-text);
+}
+
+/* --- Crosshair tooltip cells --- */
+.as-tooltip-cell {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+.as-tooltip-label {
+  color: var(--as-muted);
+  font-size: 0.75rem;
+}
+.as-tooltip-value {
+  color: var(--as-text);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+/* --- Visible crosshair (vertical line following cursor) --- */
+.as-crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--as-primary) 60%, transparent);
+  pointer-events: none;
+  z-index: 4;
+  display: none;
+}
+.as-crosshair.visible {
+  display: block;
+}
+
+/* Live indicator (V12) */
+.as-live-indicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.as-live-indicator::before {
+  content: "●";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--as-bull);
+  margin-right: 0.35em;
+  vertical-align: -0.05em;
+  box-shadow: 0 0 0 0.45em color-mix(in srgb, var(--as-bull) 35%, transparent);
+  animation: as-live-pulse 2s ease-in-out infinite;
+}
+@keyframes as-live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0.45em color-mix(in srgb, var(--as-bull) 35%, transparent); }
+  50% { box-shadow: 0 0 0 0.9em color-mix(in srgb, var(--as-bull) 20%, transparent); }
+}
+
+/* Benchmark / index compare-mode indicator (V14) */
+.as-bench-indicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.as-bench-indicator::before {
+  content: "●";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: #0ea5e9;
+  margin-right: 0.35em;
+  vertical-align: -0.05em;
+  box-shadow: 0 0 0 0.45em color-mix(in srgb, #0ea5e9 35%, transparent);
+  animation: as-live-pulse 2s ease-in-out infinite;
+}
+
+/* S0 shell: persisted sidebar collapse (desktop) */
+.as-sidebar-collapsed .as-sidebar {
+  width: 72px !important;
+  min-width: 72px;
+  max-width: 72px;
+}
+.as-sidebar-collapsed .as-sidebar .as-nav-label {
+  display: none;
+}
+.as-sidebar-collapsed .as-sidebar .nav-link {
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  text-align: center;
+}
+.as-sidebar-collapsed .as-sidebar .nav-link i {
+  font-size: 1.15rem;
+  margin-right: 0;
+}
+.as-sidebar-collapsed .as-sidebar h1 {
+  justify-content: center;
+}
+.as-sidebar-collapsed .as-sidebar h1 .as-nav-label {
+  display: none;
+}
+
+.as-content header .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* --- Toast notifications --- */
+.as-toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.as-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--as-border);
+  background: var(--as-surface);
+  color: var(--as-text);
+  min-width: 260px;
+  animation: as-toast-slide 0.25s ease-out;
+}
+@keyframes as-toast-slide {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.as-toast.success { border-color: var(--as-bull); }
+.as-toast.error { border-color: var(--as-bear); }
+.as-toast .as-toast-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.as-toast.success .as-toast-icon {
+  background: color-mix(in srgb, var(--as-bull) 15%, transparent);
+  color: var(--as-bull);
+}
+.as-toast.error .as-toast-icon {
+  background: color-mix(in srgb, var(--as-bear) 15%, transparent);
+  color: var(--as-bear);
+}
+.as-toast .as-toast-body { font-size: 0.875rem; line-height: 1.3; }
+.as-toast .as-toast-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.125rem;
+  color: var(--as-muted);
+  line-height: 1;
+}
+
+/* --- Spinner overlay on buttons --- */
+.as-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: as-spin 0.6s linear infinite;
+  display: inline-block;
+}
+@keyframes as-spin { to { transform: rotate(360deg); } }
+.btn.refreshing { pointer-events: none; opacity: 0.7; }
+.btn.refreshing .as-spinner-text { visibility: hidden; }
+
+/* --- Dashboard refresh button states --- */
+.btn[data-action='refresh-dashboard'].refreshing .bi-arrow-clockwise { display: none; }
+
+/* --- Button & interactive element smoothness --- */
+.btn {
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.btn:active {
+  transform: translateY(0.5px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--as-primary);
+  outline-offset: 2px;
+}
+
+.btn-outline-primary.active,
+.btn-outline-secondary.active {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.btn.disabled,
+.btn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* --- Add Stock metric cards --- */
+.card-metric {
+  border: 1px solid var(--as-border);
+  background: var(--as-surface);
+  transition: border-color 0.2s ease;
+}
+.card-metric .fw-semibold {
+  font-size: 0.875rem;
+}
+
+/* --- Form field focus states --- */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--as-primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--as-primary) 25%, transparent);
+}
+
+/* --- Metrics section on Add Stock --- */
+#as-metrics-section {
+  border-style: dashed;
+}
+#as-metrics-section .as-spinner {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* --- Stock detail refresh button --- */
+.as-refresh-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.as-refresh-btn--loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+.as-refresh-btn--loading .bi-arrow-clockwise {
+  display: none;
+}
+.as-refresh-btn .as-spinner {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* --- Metric card loading / empty states --- */
+.as-metric--loading {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--as-surface) 80%, transparent);
+}
+.as-metric--loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--as-bg) 40%, transparent) 0%,
+    color-mix(in srgb, var(--as-bg) 70%, transparent) 50%,
+    color-mix(in srgb, var(--as-bg) 40%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: as-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes as-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.as-metric--fresh {
+  border-left: 3px solid var(--as-bull);
+}
+.as-metric--stale {
+  border-left: 3px solid var(--as-warn);
+}
+
+.as-metric-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--as-muted) 15%, transparent);
+  color: var(--as-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.as-metric-empty .as-spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-width: 1.5px;
+}
+
+/* --- Stock detail metric cards (overview redesign) --- */
+.as-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.as-metric-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--as-border);
+  border-radius: 0.5rem;
+  background: var(--as-surface);
+  padding: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.as-metric-card:hover {
+  border-color: var(--as-primary);
+}
+
+.as-metric-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.as-metric-category--valuation { background: color-mix(in srgb, var(--as-primary) 12%, transparent); color: var(--as-primary); }
+.as-metric-category--profitability { background: color-mix(in srgb, var(--as-bull) 12%, transparent); color: var(--as-bull); }
+.as-metric-category--health { background: color-mix(in srgb, var(--as-warn) 12%, transparent); color: var(--as-warn); }
+.as-metric-category--trading { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0ea5e9; }
+
+.as-metric-label {
+  font-size: 0.6875rem;
+  color: var(--as-muted);
+  margin-bottom: 0.25rem;
+}
+
+.as-metric-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--as-text);
+  word-break: break-all;
+}
+
+.as-metric-value--empty {
+  color: var(--as-muted);
+}
+
+.as-metric-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.as-metric-refresh {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--as-muted);
+  border-radius: 0.25rem;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.as-metric-refresh:hover {
+  color: var(--as-primary);
+  background: color-mix(in srgb, var(--as-primary) 10%, transparent);
+}
+
+.as-metric-refresh:focus-visible {
+  outline: 2px solid var(--as-primary);
+  outline-offset: 2px;
+}
+
+.as-metric-refresh .bi {
+  font-size: 0.75rem;
+}
+
+.as-metric-refresh--loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+.as-metric-refresh--loading .bi {
+  display: none;
+}
+
+/* --- Fundamentals table empty state --- */
+.as-fundamentals-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--as-muted);
+  font-size: 0.875rem;
+}
+
+

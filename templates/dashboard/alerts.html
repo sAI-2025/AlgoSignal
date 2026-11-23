@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Alerts | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Price Alerts</h1>
+  <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">Browse all companies</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form id="as-alert-form" class="row g-3 align-items-end">
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Symbol</label>
+        <input type="text" name="symbol" class="form-control" placeholder="e.g. RELIANCE" required />
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Target price (₹)</label>
+        <input type="number" name="targetPrice" class="form-control" step="0.01" min="0" required />
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Trigger when</label>
+        <select name="condition" class="form-select">
+          <option value="above">Price goes above</option>
+          <option value="below">Price drops below</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Set alert</button>
+        <button type="button" class="btn btn-outline-secondary" id="as-clear-alerts">Clear all</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="as-alerts-list">
+  <div class="text-muted small">No alerts set yet. Add a price alert above — it stays in your browser (localStorage) only; no notifications are sent.</div>
+</div>
+
+<script type="module">
+  import { getAlerts, addAlert, removeAlert, clearAlerts } from "{% static 'js/alerts.js' %}";
+
+  const form = document.getElementById("as-alert-form");
+  const listContainer = document.getElementById("as-alerts-list");
+  const clearBtn = document.getElementById("as-clear-alerts");
+
+  function render() {
+    const alerts = getAlerts();
+    if (!alerts.length) {
+      listContainer.innerHTML =
+        '<div class="alert alert-light border text-muted">No alerts set yet. Add a price alert above — it stays in your browser (localStorage) only; no notifications are sent.</div>';
+      return;
+    }
+    const list = document.createElement("div");
+    list.className = "list-group list-group-flush";
+    for (const alert of alerts) {
+      const item = document.createElement("div");
+      item.className = "list-group-item d-flex justify-content-between align-items-center";
+      const triggeredCls = alert.triggered ? "text-success" : "text-muted";
+      item.innerHTML = `
+        <div>
+          <div class="fw-semibold">${alert.symbol}</div>
+          <div class="small ${triggeredCls}">
+            ${alert.condition === "above" ? "▲" : "▼"} ₹${alert.targetPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${alert.triggered ? " · triggered" : ""}
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-alert-id="${alert.id}" title="Remove alert">×</button>
+      `;
+      list.appendChild(item);
+    }
+    listContainer.replaceChildren(list);
+
+    list.querySelectorAll("[data-alert-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeAlert(btn.dataset.alertId);
+        render();
+      });
+    });
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const symbol = data.get("symbol");
+    const targetPrice = data.get("targetPrice");
+    const condition = data.get("condition");
+    if (!symbol || !targetPrice) {
+      return;
+    }
+    addAlert(symbol, targetPrice, condition);
+    form.reset();
+    render();
+  });
+
+  clearBtn.addEventListener("click", () => {
+    clearAlerts();
+    render();
+  });
+
+  render();
+</script>
+{% endblock %}

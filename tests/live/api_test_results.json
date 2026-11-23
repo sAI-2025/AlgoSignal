@@ -1,0 +1,513 @@
+{
+  "summary": {
+    "total": 56,
+    "passed": 55,
+    "failed": 1
+  },
+  "results": [
+    {
+      "test": "health",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/health/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_companies_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_dashboard_summary_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/dashboard/summary/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_scanner_run_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/run/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_charts_RELIANCE_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_fetcher_schedules_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/schedules/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unauth__api_v1_explorer_search_",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/explorer/search/",
+      "status": 403,
+      "expected": 403,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_list",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_sectors",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/sectors/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_detail_reliance",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_detail_notfound",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/NOSUCH/",
+      "status": 404,
+      "expected": 404,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_metrics_notfound",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/NOSUCH/metrics/",
+      "status": 404,
+      "expected": 404,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "companies_metrics_reliance",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/companies/RELIANCE/metrics/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=200 (200=has metrics, 404=no metrics)"
+    },
+    {
+      "test": "companies_import_staff",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/companies/import/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled, 502=provider error)"
+    },
+    {
+      "test": "scanner_run_valid",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/run/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "scanner_run_missing_defaults",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/run/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "scanner_run_validation_short_zero",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/run/",
+      "status": 429,
+      "expected": 400,
+      "passed": true,
+      "detail": "status=429 (400=validation, 429=throttled)"
+    },
+    {
+      "test": "scanner_run_crossfield",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/run/",
+      "status": 429,
+      "expected": 422,
+      "passed": true,
+      "detail": "status=429 (422=cross-field, 429=throttled)"
+    },
+    {
+      "test": "scanner_settings_get",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/settings/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "scanner_settings_put_staff",
+      "method": "PUT",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/settings/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=200 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "scanner_signals_list",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/scanner/signals/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "top_performers_1M",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/analytics/top-performers/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "top_performers_invalid_period",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/analytics/top-performers/",
+      "status": 400,
+      "expected": 400,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "market_overview",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/analytics/market-overview/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "analytics_sectors",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/analytics/sectors/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "explorer_search",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/explorer/search/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "explorer_search_empty",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/explorer/search/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "dashboard_summary",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/dashboard/summary/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "fetcher_schedules",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/schedules/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "fetcher_schedule_detail_staff",
+      "method": "PUT",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/schedules/1/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "fetcher_schedule_run_now_staff",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/schedules/1/run-now/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=started, 409=busy, 429=throttled)"
+    },
+    {
+      "test": "fetcher_backfill_staff",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/backfill/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "fetcher_backfill_validation",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/backfill/",
+      "status": 429,
+      "expected": 400,
+      "passed": true,
+      "detail": "status=429 (400=validation, 429=throttled)"
+    },
+    {
+      "test": "fetcher_runs_list",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/runs/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "fetcher_run_detail_notfound",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/runs/99999/",
+      "status": 404,
+      "expected": 404,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "fetcher_coverage",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/fetcher/coverage/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "market_data_coverage_dup",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/market-data/coverage/",
+      "status": 429,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=429 (200=ok, 429=throttled)"
+    },
+    {
+      "test": "live_quote_reliance",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/live/quote/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "live_quote_body",
+      "method": "BODY_CHECK",
+      "url": "symbol",
+      "status": 1,
+      "expected": 1,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "live_quote_has_price",
+      "method": "BODY_CHECK",
+      "url": "price",
+      "status": 1,
+      "expected": 1,
+      "passed": true,
+      "detail": "price=1351.0"
+    },
+    {
+      "test": "live_quote_has_as_of",
+      "method": "BODY_CHECK",
+      "url": "as_of",
+      "status": 1,
+      "expected": 1,
+      "passed": true,
+      "detail": "as_of=2026-11-23T15:29:00+05:30"
+    },
+    {
+      "test": "live_quote_has_market_state",
+      "method": "BODY_CHECK",
+      "url": "market_state",
+      "status": 1,
+      "expected": 1,
+      "passed": true,
+      "detail": "market_state=CLOSED"
+    },
+    {
+      "test": "live_quote_notfound",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/live/quote/NOSUCH/",
+      "status": 404,
+      "expected": 404,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "live_quotes_batch",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/live/quotes/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "live_quotes_is_list",
+      "method": "BODY_CHECK",
+      "url": "is_list",
+      "status": 1,
+      "expected": 1,
+      "passed": true,
+      "detail": "response is list of 3 items"
+    },
+    {
+      "test": "live_intraday",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/live/intraday/RELIANCE/",
+      "status": 429,
+      "expected": 200,
+      "passed": false,
+      "detail": "status=429"
+    },
+    {
+      "test": "live_refresh_metrics",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/live/refresh-metrics/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": "status=200 (200=ok, 429=throttled, 502=provider error)"
+    },
+    {
+      "test": "chart_payload_basic",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_unknown_symbol",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/NOSUCH/",
+      "status": 404,
+      "expected": 404,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_bad_sma",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 422,
+      "expected": 422,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_sma_out_of_range",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 422,
+      "expected": 422,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_bad_before",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 400,
+      "expected": 400,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_before_anchor",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_extra_indicators",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_benchmark",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "chart_payload_indicator_invalid",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/charts/RELIANCE/",
+      "status": 422,
+      "expected": 422,
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

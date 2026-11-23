@@ -1,0 +1,274 @@
+{
+  "summary": {
+    "total": 53,
+    "passed": 42,
+    "failed": 11
+  },
+  "results": [
+    {
+      "test": "chart_reliance_sma7_returns_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "chart_has_candles",
+      "passed": false,
+      "detail": "0 candles"
+    },
+    {
+      "test": "chart_has_sma_7",
+      "passed": true,
+      "detail": "sma_7 indicator present"
+    },
+    {
+      "test": "sma_7_has_points",
+      "passed": false,
+      "detail": "0 SMA points"
+    },
+    {
+      "test": "scanner_run_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "scanner_has_rows",
+      "passed": true,
+      "detail": "rows key present"
+    },
+    {
+      "test": "scanner_has_counts",
+      "passed": true,
+      "detail": "counts key present"
+    },
+    {
+      "test": "scanner_has_total",
+      "passed": true,
+      "detail": "total_crossovers present"
+    },
+    {
+      "test": "scanner_has_as_of",
+      "passed": true,
+      "detail": "as_of present"
+    },
+    {
+      "test": "scanner_counts_has_bullish",
+      "passed": true,
+      "detail": "bullish=0"
+    },
+    {
+      "test": "scanner_counts_has_bearish",
+      "passed": true,
+      "detail": "bearish=0"
+    },
+    {
+      "test": "market_overview_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "overview_has_advancers",
+      "passed": true,
+      "detail": "advancers=0"
+    },
+    {
+      "test": "overview_has_decliners",
+      "passed": true,
+      "detail": "decliners=0"
+    },
+    {
+      "test": "overview_has_unchanged",
+      "passed": true,
+      "detail": "unchanged=0"
+    },
+    {
+      "test": "overview_total_non_negative",
+      "passed": true,
+      "detail": "total=0"
+    },
+    {
+      "test": "dashboard_summary_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "dashboard_has_coverage",
+      "passed": true,
+      "detail": "coverage present"
+    },
+    {
+      "test": "dashboard_has_breadth",
+      "passed": true,
+      "detail": "breadth present"
+    },
+    {
+      "test": "dashboard_has_sectors",
+      "passed": true,
+      "detail": "sectors present"
+    },
+    {
+      "test": "dashboard_has_recent_signals",
+      "passed": true,
+      "detail": "recent_signals present"
+    },
+    {
+      "test": "dashboard_has_top_gainers",
+      "passed": true,
+      "detail": "top_gainers present"
+    },
+    {
+      "test": "dashboard_has_freshness_stale",
+      "passed": true,
+      "detail": "freshness_stale=False"
+    },
+    {
+      "test": "coverage_has_companies",
+      "passed": true,
+      "detail": "companies=0"
+    },
+    {
+      "test": "coverage_has_with_data",
+      "passed": true,
+      "detail": "with_data=0"
+    },
+    {
+      "test": "breadth_has_advancers",
+      "passed": true,
+      "detail": "advancers=0"
+    },
+    {
+      "test": "breadth_has_decliners",
+      "passed": true,
+      "detail": "decliners=0"
+    },
+    {
+      "test": "breadth_has_unchanged",
+      "passed": true,
+      "detail": "unchanged=0"
+    },
+    {
+      "test": "coverage_endpoint1_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "coverage_endpoint2_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "coverage_consistent_companies",
+      "passed": true,
+      "detail": "endpoint1=0, endpoint2=0"
+    },
+    {
+      "test": "coverage_consistent_with_data",
+      "passed": true,
+      "detail": "endpoint1=0, endpoint2=0"
+    },
+    {
+      "test": "chart_extra_indicators_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "chart_indicator_ema_12",
+      "passed": false,
+      "detail": "ema_12 MISSING"
+    },
+    {
+      "test": "chart_indicator_rsi_14",
+      "passed": false,
+      "detail": "rsi_14 MISSING"
+    },
+    {
+      "test": "chart_indicator_macd",
+      "passed": false,
+      "detail": "macd MISSING"
+    },
+    {
+      "test": "chart_indicator_macd_signal",
+      "passed": false,
+      "detail": "macd_signal MISSING"
+    },
+    {
+      "test": "chart_indicator_macd_histogram",
+      "passed": false,
+      "detail": "macd_histogram MISSING"
+    },
+    {
+      "test": "chart_indicator_bollinger_upper",
+      "passed": false,
+      "detail": "bollinger_upper MISSING"
+    },
+    {
+      "test": "chart_indicator_bollinger_middle",
+      "passed": false,
+      "detail": "bollinger_middle MISSING"
+    },
+    {
+      "test": "chart_indicator_bollinger_lower",
+      "passed": false,
+      "detail": "bollinger_lower MISSING"
+    },
+    {
+      "test": "chart_indicator_volume_sma_20",
+      "passed": false,
+      "detail": "volume_sma_20 MISSING"
+    },
+    {
+      "test": "chart_benchmark_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "chart_has_benchmark",
+      "passed": true,
+      "detail": "benchmark present"
+    },
+    {
+      "test": "live_quote_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "live_quote_has_symbol",
+      "passed": true,
+      "detail": "symbol=RELIANCE"
+    },
+    {
+      "test": "live_quote_has_price",
+      "passed": true,
+      "detail": "price=1351.0"
+    },
+    {
+      "test": "live_quote_has_as_of",
+      "passed": true,
+      "detail": "as_of present"
+    },
+    {
+      "test": "live_quote_has_market_state",
+      "passed": true,
+      "detail": "market_state=CLOSED"
+    },
+    {
+      "test": "live_intraday_200",
+      "passed": true,
+      "detail": "status=200"
+    },
+    {
+      "test": "intraday_has_symbol",
+      "passed": true,
+      "detail": "symbol=RELIANCE"
+    },
+    {
+      "test": "intraday_has_interval",
+      "passed": true,
+      "detail": "interval=5m"
+    },
+    {
+      "test": "intraday_has_bars",
+      "passed": true,
+      "detail": "74 bars"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_tests.py"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["apps", "config"]
+omit = ["*/migrations/*"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["static/vendor", "skills", ".skills", ".system", ".kilo"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

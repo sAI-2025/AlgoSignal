@@ -1,0 +1,11 @@
+-r base.txt
+
+# Development and test dependencies
+coverage==7.17.4
+factory_boy==3.3.3
+freezegun==1.5.5
+pre-commit==4.7.0
+pytest==9.2.0
+pytest-django==4.14.0
+responses==0.26.3
+ruff==0.17.6

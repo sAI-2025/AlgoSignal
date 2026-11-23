@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Companies | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Companies <span class="badge text-bg-secondary align-middle">{{ total }}</span></h1>
+  <a href="{% url 'companies:add' %}" class="btn btn-sm btn-primary">+ Add stock</a>
+</div>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+  <input type="search" name="q" value="{{ query }}" class="form-control"
+         style="max-width: 320px;" placeholder="Search name or symbol" />
+  <select name="sector" class="form-select" style="max-width: 220px;" onchange="this.form.submit()">
+    <option value="">All sectors</option>
+    {% for name in sectors %}
+    <option value="{{ name }}" {% if name == sector %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+  </select>
+  <select name="ordering" class="form-select" style="max-width: 160px;" onchange="this.form.submit()">
+    <option value="name" {% if ordering == 'name' %}selected{% endif %}>Name</option>
+    <option value="price" {% if ordering == 'price' %}selected{% endif %}>Price</option>
+    <option value="pe" {% if ordering == 'pe' %}selected{% endif %}>P/E</option>
+    <option value="market_cap" {% if ordering == 'market_cap' %}selected{% endif %}>Market cap</option>
+  </select>
+  <button class="btn btn-outline-primary" type="submit">Apply</button>
+</form>
+
+{% if companies %}
+<div class="table-responsive">
+  <table class="table table-sm align-middle as-table">
+    <thead>
+      <tr><th>Company</th><th>Symbol</th><th>Sector</th><th class="text-end" style="width:34px;">Watchlist</th>
+      <th class="text-end">Price</th><th class="text-end">P/E</th><th class="text-end">Market cap</th></tr>
+    </thead>
+    <tbody>
+      {% for company in companies %}
+      <tr>
+        <td>{{ company.company_name }}</td>
+        <td>
+          <a href="{% url 'explorer:detail' company.nse_code %}" class="text-decoration-none">
+            {{ company.nse_code }}
+          </a>
+        </td>
+        <td class="text-muted">{{ company.sector|default:"—" }}</td>
+        <td class="text-end">
+          <button class="btn btn-sm p-0 border-0 watchlist-star" data-code="{{ company.nse_code }}"
+                  title="Toggle watchlist" aria-label="Toggle watchlist for {{ company.nse_code }}">☆</button>
+        </td>
+        <td class="text-end as-num">{% if company.price %}{{ company.price|floatformat:2 }}{% else %}—{% endif %}</td>
+        <td class="text-end as-num">{% if company.trailing_pe %}{{ company.trailing_pe|floatformat:2 }}{% else %}—{% endif %}</td>
+        <td class="text-end as-num">{% if company.market_cap %}{{ company.market_cap|floatformat:0 }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.has_other_pages %}
+<nav>
+  <ul class="pagination pagination-sm mb-0">
+    {% if pagination.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page={{ pagination.previous_page_number }}&q={{ query|urlencode }}&sector={{ sector|urlencode }}&ordering={{ ordering }}">Previous</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Page {{ pagination.number }} of {{ pagination.paginator.num_pages }}</span></li>
+    {% if pagination.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ pagination.next_page_number }}&q={{ query|urlencode }}&sector={{ sector|urlencode }}&ordering={{ ordering }}">Next</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<div class="alert alert-light border text-muted">
+  No companies yet. Run a constituents sync from Market Data.
+</div>
+{% endif %}
+
+<script type="module">
+  import { toggle, isWatchlisted } from "{% static 'js/watchlist.js' %}";
+  document.querySelectorAll(".watchlist-star").forEach((btn) => {
+    const code = btn.dataset.code;
+    if (isWatchlisted(code)) {
+      btn.textContent = "★";
+      btn.classList.add("text-warning");
+    }
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      const now = toggle(code);
+      btn.textContent = now ? "★" : "☆";
+      btn.classList.toggle("text-warning", now);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Settings | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Settings</h1>
+</div>
+
+{% if not is_staff %}
+<div class="alert alert-warning py-2 small">
+  You can view settings but only staff can change them.
+</div>
+{% endif %}
+
+{% if errors.form %}
+<div class="alert alert-danger py-2 small">{{ errors.form }}</div>
+{% endif %}
+
+<div class="card" style="max-width: 640px;">
+  <div class="card-body">
+    <h2 class="h6 text-muted">Scanner defaults</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label small mb-1">Short SMA</label>
+          <input type="number" name="short_period" value="{{ settings.short_period }}" min="1"
+                 class="form-control {% if errors.short_period %}is-invalid{% endif %}" />
+          {% if errors.short_period %}<div class="invalid-feedback">{{ errors.short_period }}</div>{% endif %}
+        </div>
+        <div class="col-6">
+          <label class="form-label small mb-1">Long SMA</label>
+          <input type="number" name="long_period" value="{{ settings.long_period }}" min="1"
+                 class="form-control {% if errors.long_period %}is-invalid{% endif %}" />
+          {% if errors.long_period %}<div class="invalid-feedback">{{ errors.long_period }}</div>{% endif %}
+        </div>
+        <div class="col-6">
+          <label class="form-label small mb-1">Lookback (sessions)</label>
+          <input type="number" name="lookback_days" value="{{ settings.lookback_days }}" min="1"
+                 class="form-control {% if errors.lookback_days %}is-invalid{% endif %}" />
+          {% if errors.lookback_days %}<div class="invalid-feedback">{{ errors.lookback_days }}</div>{% endif %}
+        </div>
+        <div class="col-6">
+          <label class="form-label small mb-1">Max stocks</label>
+          <input type="number" name="max_stocks" value="{{ settings.max_stocks }}" min="1"
+                 class="form-control {% if errors.max_stocks %}is-invalid{% endif %}" />
+          {% if errors.max_stocks %}<div class="invalid-feedback">{{ errors.max_stocks }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" name="auto_run_on_open" class="form-check-input"
+                   {% if settings.auto_run_on_open %}checked{% endif %} id="autoRun" />
+            <label class="form-check-label small" for="autoRun">Auto-run scan on open</label>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" {% if not is_staff %}disabled{% endif %}>Save</button>
+        <a href="{% url 'dashboard:settings' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card mt-3" style="max-width: 640px;">
+  <div class="card-body">
+    <h2 class="h6 text-muted">About</h2>
+    <p class="small text-muted mb-1">
+      AlgoSignal · Signals are research indicators, not investment advice.
+      Market data provided by yfinance; charts by TradingView Lightweight Charts™.
+    </p>
+  </div>
+</div>
+{% endblock %}

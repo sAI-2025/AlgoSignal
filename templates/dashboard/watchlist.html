@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Watchlist | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Watchlist</h1>
+  <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">Browse all companies</a>
+</div>
+
+<div id="as-watchlist">
+  <div class="text-muted small">Your starred companies appear here. Star a company from the Companies table or a signal row to add it.</div>
+</div>
+
+<script type="module">
+  import { getWatchlist } from "{% static 'js/watchlist.js' %}";
+  const container = document.getElementById("as-watchlist");
+  const codes = getWatchlist();
+  if (!codes.length) {
+    container.innerHTML =
+      '<div class="alert alert-light border text-muted">No companies on your watchlist yet.</div>';
+  } else {
+    const list = document.createElement("div");
+    list.className = "list-group list-group-flush";
+    for (const code of codes) {
+      const item = document.createElement("a");
+      item.href = "{% url 'explorer:detail' 'XXXX' %}".replace("XXXX", code);
+      item.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+      item.innerHTML = `<span>${code}</span><span class="badge bg-secondary">Open chart</span>`;
+      list.appendChild(item);
+    }
+    container.replaceChildren(list);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ company.nse_code }} · {{ company.company_name }} | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="as-toast-container" aria-label="Notifications"></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ company.nse_code }} · {{ company.company_name }}</h1>
+    <div class="d-flex flex-wrap gap-2 small">
+      <span class="badge text-bg-light">NSE: {{ company.nse_code }}</span>
+      {% if company.bse_code %}<span class="badge text-bg-light">BSE: {{ company.bse_code }}</span>{% endif %}
+      {% if company.sector %}<span class="badge text-bg-secondary">{{ company.sector }}</span>{% endif %}
+      {% if company.industry %}<span class="badge text-bg-secondary">{{ company.industry }}</span>{% endif %}
+    </div>
+  </div>
+  <div class="text-end">
+    {% if detail.latest_close is not None %}
+    <div class="h4 mb-0">₹ {{ detail.latest_close|floatformat:2 }}</div>
+    {% endif %}
+    <button type="button" class="btn btn-sm btn-outline-primary as-refresh-btn"
+            data-action="refresh-metrics"
+            data-symbol="{{ company.nse_code }}"
+            id="as-refresh-btn"
+            title="Refresh metrics">
+      <i class="bi bi-arrow-clockwise"></i>
+      <span>Refresh</span>
+    </button>
+    <a href="{% url 'visualization:workspace' company.nse_code %}"
+       class="btn btn-sm btn-outline-primary mt-1">
+      <i class="bi bi-arrows-fullscreen"></i> Open chart workspace
+    </a>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  {% for name in tabs %}
+  <li class="nav-item">
+    <a class="nav-link {% if name == tab %}active{% endif %}"
+       href="?tab={{ name }}">{{ name|title }}</a>
+  </li>
+  {% endfor %}
+</ul>
+
+{% if tab == 'overview' %}
+  {% include 'explorer/_tab_overview.html' %}
+{% elif tab == 'chart' %}
+  <div style="height: 70vh;">
+    {% include 'visualization/_chart_workspace.html' %}
+  </div>
+{% elif tab == 'fundamentals' %}
+  {% include 'explorer/_tab_fundamentals.html' %}
+{% elif tab == 'signals' %}
+  {% include 'explorer/_tab_signals.html' %}
+{% elif tab == 'history' %}
+  {% include 'explorer/_tab_history.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/lightweight-charts/lightweight-charts.standalone.production.js' %}"></script>
+<script type="module" src="{% static 'visualization/js/chartWorkspace.js' %}"></script>
+<script type="module">
+  import { initRefreshMetrics } from "{% static 'js/pages/stock-detail.js' %}";
+  const btn = document.getElementById("as-refresh-btn");
+  if (btn) {
+    initRefreshMetrics(btn);
+  }
+</script>
+{% endblock %}

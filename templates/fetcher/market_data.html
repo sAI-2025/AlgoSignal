@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Market Data | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Market Data</h1>
+</div>
+
+{% if message %}
+<div class="alert {% if message_error %}alert-danger{% else %}alert-success{% endif %} py-2 small">
+  {{ message }}
+</div>
+{% endif %}
+
+{% if scheduler_stale %}
+<div class="alert alert-warning py-2 small">
+  <strong>Scheduler is not running.</strong>
+  No tick recorded{% if heartbeat_age %} ({{ heartbeat_age }}s ago){% endif %}.
+  Start it with <code>python manage.py run_scheduler</code> on a cron every ~10 minutes.
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="card h-100"><div class="card-body py-3">
+      <div class="small text-muted">Provider</div>
+      <div class="h5 mb-0">
+        yfinance
+        {% if cooling_down %}
+        <span class="badge text-bg-warning">cooling down ({{ cooldown_seconds }}s)</span>
+        {% else %}
+        <span class="badge text-bg-success">OK</span>
+        {% endif %}
+      </div>
+    </div></div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card h-100"><div class="card-body py-3">
+      <div class="small text-muted">Coverage</div>
+      <div class="h5 mb-0">{{ coverage.with_data }} / {{ coverage.companies }}</div>
+      <div class="small text-muted">latest candle {{ coverage.latest_candle|default:"—" }}</div>
+    </div></div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card h-100"><div class="card-body py-3">
+      <div class="small text-muted">Scheduler heartbeat</div>
+      <div class="h5 mb-0">
+        {% if heartbeat_age is None %}never
+        {% else %}{{ heartbeat_age }}s ago{% endif %}
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="h6 text-muted">Schedules</h2>
+    {% if schedules %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle as-table mb-0">
+        <thead>
+          <tr>
+            <th>Job</th><th>Enabled</th><th class="text-end">Every (h)</th>
+            <th>Next run</th><th>Last status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for schedule in schedules %}
+          <tr>
+            <td>{{ schedule.get_job_type_display }}</td>
+            <td>
+              {% if is_staff %}
+              <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle" />
+                <input type="hidden" name="schedule_id" value="{{ schedule.id }}" />
+                <button class="btn btn-sm {% if schedule.enabled %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                        type="submit">{{ schedule.enabled|yesno:"on,off" }}</button>
+              </form>
+              {% else %}
+              <span class="badge {% if schedule.enabled %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                {{ schedule.enabled|yesno:"on,off" }}
+              </span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if is_staff %}
+              <form method="post" class="d-inline-flex gap-1 align-items-center">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="interval" />
+                <input type="hidden" name="schedule_id" value="{{ schedule.id }}" />
+                <input type="number" name="interval_hours" value="{{ schedule.interval_hours }}"
+                       min="1" max="168" class="form-control form-control-sm" style="width: 80px;" />
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Set</button>
+              </form>
+              {% else %}
+              {{ schedule.interval_hours }}
+              {% endif %}
+            </td>
+            <td class="small">{{ schedule.next_run_at|default:"—" }}</td>
+            <td>
+              {% if schedule.last_status %}
+              <span class="badge {% if schedule.last_status == 'SUCCESS' %}text-bg-success{% elif schedule.last_status == 'FAILED' %}text-bg-danger{% elif schedule.last_status == 'PARTIAL' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+                {{ schedule.last_status }}
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-end">
+              {% if is_staff %}
+              <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="run_now" />
+                <input type="hidden" name="schedule_id" value="{{ schedule.id }}" />
+                <button class="btn btn-sm btn-outline-primary" type="submit">Run now</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">No schedules yet. Run <code>python manage.py run_scheduler --dry-run</code> once to seed defaults.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h6 text-muted mb-0">Run history</h2>
+      <form method="get" class="d-flex gap-2">
+        <select name="job" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+          <option value="">All jobs</option>
+          {% for value, label in job_types %}
+          <option value="{{ value }}" {% if value == job_filter %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+          <option value="">All statuses</option>
+          {% for value, label in statuses %}
+          <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+    {% if runs %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle as-table mb-0">
+        <thead>
+          <tr><th>Started</th><th>Job</th><th>Trigger</th><th>Status</th>
+          <th class="text-end">OK / total</th><th class="text-end">Rows</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+          <tr>
+            <td class="small">{{ run.started_at }}</td>
+            <td>{{ run.get_job_type_display }}</td>
+            <td class="small text-muted">{{ run.get_trigger_display }}</td>
+            <td>
+              <span class="badge {% if run.status == 'SUCCESS' %}text-bg-success{% elif run.status == 'FAILED' %}text-bg-danger{% elif run.status == 'PARTIAL' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+                {{ run.status }}
+              </span>
+            </td>
+            <td class="text-end as-num">{{ run.success_items }} / {{ run.total_items }}</td>
+            <td class="text-end as-num">{{ run.rows_written }}</td>
+            <td class="small text-muted">{{ run.message|default:"" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">No runs recorded yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

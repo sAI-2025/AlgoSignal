@@ -1,0 +1,136 @@
+{% load static %}
+<div class="as-chart-card" data-chart-workspace
+     data-symbol="{{ company.nse_code }}"
+     data-api-base="{% url 'visualization:chart_payload' company.nse_code %}">
+  <div class="as-chart-toolbar">
+    <!-- Timeframe + series type: always visible (most used) -->
+    <div class="as-toolbar-group as-toolbar-group--always">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Timeframe">
+        {% for tf in timeframes %}
+        <button type="button" class="btn btn-outline-primary {% if tf == '1Y' %}active{% endif %}" data-tf="{{ tf }}">{{ tf }}</button>
+        {% endfor %}
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Series type">
+        <button type="button" class="btn btn-outline-secondary active" data-series="candlestick">Candles</button>
+        <button type="button" class="btn btn-outline-secondary" data-series="line">Line</button>
+        <button type="button" class="btn btn-outline-secondary" data-series="area">Area</button>
+      </div>
+    </div>
+
+    <!-- Indicators: collapsible -->
+    <details class="as-toolbar-group as-toolbar-group--collapse" id="as-toolbar-indicators">
+      <summary class="as-toolbar-summary"><i class="bi bi-cpu"></i> Indicators</summary>
+      <div class="btn-group btn-group-sm" role="group" aria-label="SMA periods">
+        {% for period in sma_options %}
+        <label class="btn btn-outline-secondary">
+          <input class="form-check-input me-1" type="checkbox" value="{{ period }}" data-sma-toggle checked />
+          SMA {{ period }}
+        </label>
+        {% endfor %}
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Additional indicators">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="ema" data-window="12" title="EMA 12">
+          EMA 12
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="ema" data-window="26" title="EMA 26">
+          EMA 26
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="rsi" data-window="14" title="RSI 14">
+          RSI 14
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="macd" data-fast="12" data-slow="26" data-signal="9" title="MACD 12,26,9">
+          MACD
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="bollinger" data-window="20" data-num-std="2" title="Bollinger 20,2">
+          Bollinger
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-indicator="volume_sma" data-window="20" title="Volume SMA 20">
+          Vol SMA 20
+        </button>
+      </div>
+
+      <div class="d-flex gap-2 mt-2">
+        <label class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+          <input class="form-control form-control-sm as-custom-sma-input" type="text"
+                 inputmode="numeric" placeholder="SMA e.g. 50,100"
+                 aria-label="Custom SMA periods" data-custom-sma
+                 style="width: 7.5rem; border: none; padding: 0; background: transparent;" />
+        </label>
+        <label class="btn btn-sm btn-outline-secondary">
+          <input class="form-check-input me-1" type="checkbox" data-markers-toggle checked />
+          Markers
+        </label>
+      </div>
+    </details>
+
+    <!-- Mode toggles: live + benchmark -->
+    <details class="as-toolbar-group as-toolbar-group--collapse" id="as-toolbar-modes">
+      <summary class="as-toolbar-summary"><i class="bi bi-broadcast"></i> Modes</summary>
+      <label class="btn btn-sm btn-outline-secondary" data-action="live" title="Live quote polling (L)">
+        <span class="as-live-indicator">● LIVE</span>
+      </label>
+      <label class="btn btn-sm btn-outline-secondary" data-action="benchmark" title="Compare with index (^NSEI)">
+        <span class="as-bench-indicator">● Index</span>
+      </label>
+    </details>
+
+    <!-- Drawing tools: collapsible -->
+    <details class="as-toolbar-group as-toolbar-group--collapse" id="as-toolbar-drawing">
+      <summary class="as-toolbar-summary"><i class="bi bi-pencil"></i> Drawing</summary>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Drawing tools">
+        <button type="button" class="btn btn-outline-primary" data-tool="pin" title="Pin a price level (P)">
+          <i class="bi bi-pin-angle"></i> Pin
+        </button>
+        <button type="button" class="btn btn-outline-primary" data-tool="measure" title="Measure a move (M)">
+          <i class="bi bi-rulers"></i> Measure
+        </button>
+        <button type="button" class="btn btn-outline-primary" data-tool="range" title="Drag to summarise a range (R)">
+          <i class="bi bi-aspect-ratio"></i> Range
+        </button>
+        <button type="button" class="btn btn-outline-primary" data-tool="trendline" title="Draw a trendline (T)">
+          <i class="bi bi-layout-template"></i> Trendline
+        </button>
+        <button type="button" class="btn btn-outline-primary" data-tool="horizontal" title="Draw a horizontal level (H)">
+          <i class="bi bi-text-center"></i> Horizontal
+        </button>
+      </div>
+    </details>
+
+    <!-- Actions: always visible -->
+    <div class="as-toolbar-group as-toolbar-group--always ms-auto d-flex gap-1">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="clear" title="Clear tools (C / Esc)">
+        <i class="bi bi-eraser"></i> Clear
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="table">Table</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="png">PNG</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="csv">CSV</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="fullscreen">Fullscreen</button>
+    </div>
+  </div>
+
+  <div class="as-chart-container" data-chart-canvas>
+    <div class="as-crosshair" aria-hidden="true"></div>
+  </div>
+  <div class="as-chart-legend" data-chart-legend></div>
+  <div class="as-chart-pins px-3 py-1 border-top" data-pins-list>
+    <span class="text-muted small">No pinned levels.</span>
+  </div>
+  <div class="px-3 py-2 border-top small" data-chart-info>
+    <span class="text-muted">Hover over the chart for OHLC + SMA values.</span>
+  </div>
+
+  <div class="as-chart-table d-none" data-chart-table>
+    <table class="table table-sm table-striped mb-0">
+      <thead>
+        <tr><th>Date</th><th class="text-end">Open</th><th class="text-end">High</th>
+        <th class="text-end">Low</th><th class="text-end">Close</th><th class="text-end">Volume</th></tr>
+      </thead>
+      <tbody data-chart-table-body></tbody>
+    </table>
+  </div>
+
+  <div class="as-attribution">
+    Charts by TradingView Lightweight Charts™ ·
+    <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView</a>
+  </div>
+</div>

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Signals | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1">Signals scanner</h1>
+    <p class="text-muted small mb-0">
+      <i class="bi bi-info-circle"></i>
+      Signals are research indicators, not investment advice.
+    </p>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="post" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Short SMA</label>
+        <input type="number" name="short_period" class="form-control {% if errors.short_period %}is-invalid{% endif %}"
+               value="{{ params.short_period }}" min="1" />
+        {% if errors.short_period %}<div class="invalid-feedback">{{ errors.short_period }}</div>{% endif %}
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Long SMA</label>
+        <input type="number" name="long_period" class="form-control {% if errors.long_period %}is-invalid{% endif %}"
+               value="{{ params.long_period }}" min="1" />
+        {% if errors.long_period %}<div class="invalid-feedback">{{ errors.long_period }}</div>{% endif %}
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Lookback (sessions)</label>
+        <input type="number" name="lookback_days" class="form-control {% if errors.lookback_days %}is-invalid{% endif %}"
+               value="{{ params.lookback_days }}" min="1" />
+        {% if errors.lookback_days %}<div class="invalid-feedback">{{ errors.lookback_days }}</div>{% endif %}
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Max stocks</label>
+        <input type="number" name="max_stocks" class="form-control {% if errors.max_stocks %}is-invalid{% endif %}"
+               value="{{ params.max_stocks }}" min="1" />
+        {% if errors.max_stocks %}<div class="invalid-feedback">{{ errors.max_stocks }}</div>{% endif %}
+      </div>
+      <div class="col-12 col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-play-fill"></i> Generate Signals
+        </button>
+        <a href="{% url 'scanner:signals' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if scan_result %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div>
+    <strong>{{ scan_result.total_crossovers }}</strong> crossovers found ·
+    showing {{ scan_result.rows|length }} · as of {{ scan_result.as_of }}
+  </div>
+  <div class="small">
+    <span class="text-success">▲ {{ scan_result.bullish_count }} bullish</span>
+    <span class="text-danger ms-2">▼ {{ scan_result.bearish_count }} bearish</span>
+  </div>
+</div>
+{% if scan_result.skipped %}
+<div class="alert alert-warning py-2 small">
+  {{ scan_result.skipped|length }} companies skipped (not enough history / no data).
+</div>
+{% endif %}
+{% if scan_result.rows %}
+<div class="table-responsive">
+  <table class="table table-sm align-middle as-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Ticker</th><th>Company</th><th>Crossover</th>
+        <th>Date</th><th class="text-end">Close</th>
+        <th class="text-end">SMA {{ params.short_period }}</th>
+        <th class="text-end">SMA {{ params.long_period }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in scan_result.rows %}
+      <tr class="{% if row.signal_type == 'BULLISH' %}as-row-bull{% else %}as-row-bear{% endif %}">
+        <td>{{ forloop.counter }}</td>
+        <td>{{ row.nse_code }}</td>
+        <td>{{ row.company_name }}</td>
+        <td>
+          {% if row.signal_type == 'BULLISH' %}<span class="text-success">▲ BULLISH</span>
+          {% else %}<span class="text-danger">▼ BEARISH</span>{% endif %}
+        </td>
+        <td>{{ row.crossover_date }}</td>
+        <td class="text-end as-num">{{ row.close }}</td>
+        <td class="text-end as-num">{{ row.short_sma }}</td>
+        <td class="text-end as-num">{{ row.long_sma }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-muted">
+  No crossovers in the last {{ params.lookback_days }} trading sessions. Try a longer lookback.
+</div>
+{% endif %}
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <h2 class="h6 text-muted">Recent stored signals</h2>
+    {% if stored %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle as-table">
+        <thead>
+          <tr><th>Date</th><th>Ticker</th><th>Company</th><th>Type</th><th class="text-end">Close</th></tr>
+        </thead>
+        <tbody>
+          {% for signal in stored %}
+          <tr>
+            <td>{{ signal.crossover_date }}</td>
+            <td>{{ signal.company.nse_code }}</td>
+            <td>{{ signal.company.company_name }}</td>
+            <td>
+              {% if signal.signal_type == 'BULLISH' %}<span class="text-success">▲ BULLISH</span>
+              {% else %}<span class="text-danger">▼ BEARISH</span>{% endif %}
+            </td>
+            <td class="text-end as-num">{{ signal.close_price }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">No signals stored yet. Set your parameters and click <strong>Generate Signals</strong>.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

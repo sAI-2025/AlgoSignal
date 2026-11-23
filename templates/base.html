@@ -1,0 +1,158 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}AlgoSignal{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/algosignal.css' %}" />
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("as.theme") || "system";
+          var dark =
+            theme === "dark" ||
+            (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute(
+            "data-bs-theme",
+            dark ? "dark" : "light"
+          );
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="as-shell d-flex">
+      <aside class="as-sidebar border-end p-3" id="as-sidebar">
+        <h1 class="h5 mb-4 d-flex align-items-center gap-2">
+          <i class="bi bi-pie-chart"></i>
+          <span class="as-nav-label">AlgoSignal</span>
+        </h1>
+        <nav class="nav flex-column gap-1" id="as-nav">
+          <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+            <i class="bi bi-speedometer2"></i><span class="as-nav-label">Dashboard</span>
+          </a>
+          <a class="nav-link {% if 'companies' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'companies:list' %}">
+            <i class="bi bi-building"></i><span class="as-nav-label">Companies</span>
+          </a>
+          <a class="nav-link {% if 'scanner' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'scanner:signals' %}">
+            <i class="bi bi-graph-up"></i><span class="as-nav-label">Signals</span>
+          </a>
+          <a class="nav-link {% if 'analytics' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'analytics:top_performers' %}">
+            <i class="bi bi-currency-dollar"></i><span class="as-nav-label">Top Performers</span>
+          </a>
+          <a class="nav-link {% if 'explorer' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'explorer:home' %}">
+            <i class="bi bi-search"></i><span class="as-nav-label">Company Explorer</span>
+          </a>
+          <a class="nav-link {% if 'fetcher' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'fetcher:market_data' %}">
+            <i class="bi bi-database"></i><span class="as-nav-label">Market Data</span>
+          </a>
+          <a class="nav-link" href="{% url 'dashboard:settings' %}">
+            <i class="bi bi-gear"></i><span class="as-nav-label">Settings</span>
+          </a>
+          <a class="nav-link {% if request.resolver_match.url_name == 'watchlist' %}active{% endif %}" href="{% url 'dashboard:watchlist' %}">
+            <i class="bi bi-star"></i><span class="as-nav-label">Watchlist</span>
+          </a>
+          <a class="nav-link {% if request.resolver_match.url_name == 'alerts' %}active{% endif %}" href="{% url 'dashboard:alerts' %}">
+            <i class="bi bi-bell"></i><span class="as-nav-label">Alerts</span>
+          </a>
+        </nav>
+      </aside>
+
+      <div class="as-content flex-grow-1 d-flex flex-column min-vh-100">
+        <header
+          class="border-bottom px-4 py-3 d-flex justify-content-between align-items-center"
+        >
+          <span class="fw-semibold">Research Dashboard</span>
+          <span
+            class="badge {% if market_state == 'OPEN' %}bg-success{% elif market_state == 'PRE_OPEN' %}bg-warning{% else %}bg-secondary{% endif %}"
+          >
+            {{ market_state }} · {{ market_time_ist }} IST
+          </span>
+          <span
+            id="as-freshness"
+            class="badge bg-secondary text-decoration-none cursor-default"
+            title="Last stored candle · data source"
+          >
+            Data: —
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-search-toggle
+            aria-label="Search companies"
+            title="Search companies (Ctrl+K)"
+          >
+            <i class="bi bi-search"></i>
+          </button>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              data-sidebar-toggle
+              aria-label="Toggle sidebar"
+              title="Toggle sidebar"
+            >
+              <i class="bi bi-border-left"></i>
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              data-theme-toggle
+              aria-label="Cycle theme"
+              title="Cycle theme"
+            >
+              <i class="bi bi-sun"></i>
+            </button>
+            {% if user.is_authenticated %}
+            <div class="dropdown d-inline-block">
+              <button
+                class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                id="userMenu"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="bi bi-person-circle"></i>
+                {{ user.get_short_name|default:user.username }}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                {% if user.is_staff %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'admin:index' %}">Admin site</a>
+                </li>
+                {% endif %}
+                <li>
+                  <form method="post" action="{% url 'logout' %}" class="d-inline m-0">
+                    {% csrf_token %}
+                    <button class="dropdown-item" type="submit">Sign out</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+        </header>
+
+        <main class="p-4 flex-grow-1">{% block content %}{% endblock %}</main>
+
+        <footer class="border-top px-4 py-3 text-muted small">
+          Signals are research indicators, not guaranteed profitable trading
+          recommendations.
+        </footer>
+      </div>
+    </div>
+
+    <script src="{% static 'js/shell.js' %}" defer></script>
+    <script src="{% static 'js/shell-s0.js' %}" defer></script>
+    <script src="{% static 'js/watchlist.js' %}" defer></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

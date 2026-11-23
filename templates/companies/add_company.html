@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Add stock | AlgoSignal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Add stock</h1>
+  <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">Back to companies</a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" class="card p-4" style="max-width: 520px;" id="as-add-company-form">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">NSE symbol <span class="text-danger">*</span></label>
+    <input type="text" name="nse_code" class="form-control {% if errors.nse_code %}is-invalid{% endif %}"
+           value="{{ form_data.nse_code|default:'' }}" placeholder="e.g. RELIANCE" maxlength="20"
+           pattern="[A-Z][A-Z0-9-]{0,19}" required />
+    {% if errors.nse_code %}
+      <div class="invalid-feedback">{{ errors.nse_code }}</div>
+    {% endif %}
+    <div class="form-text">NSE trading symbol (e.g. RELIANCE, TCS, INFY). Uppercase only.</div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Company name <span class="text-danger">*</span></label>
+    <input type="text" name="name" class="form-control {% if errors.name %}is-invalid{% endif %}"
+           value="{{ form_data.name|default:'' }}" placeholder="e.g. Reliance Industries Ltd" maxlength="200" required />
+    {% if errors.name %}
+      <div class="invalid-feedback">{{ errors.name }}</div>
+    {% endif %}
+    <div class="form-text">Full legal company name.</div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Sector</label>
+    <select name="sector" class="form-select {% if errors.sector %}is-invalid{% endif %}">
+      <option value="">Select a sector</option>
+      {% for sector in allowed_sectors %}
+      <option value="{{ sector }}" {% if form_data.sector == sector %}selected{% endif %}>{{ sector }}</option>
+      {% endfor %}
+    </select>
+    {% if errors.sector %}
+      <div class="invalid-feedback">{{ errors.sector }}</div>
+    {% endif %}
+    <div class="form-text">Primary sector of the company.</div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Industry (optional)</label>
+    <input type="text" name="industry" class="form-control {% if errors.industry %}is-invalid{% endif %}"
+           value="{{ form_data.industry|default:'' }}" placeholder="e.g. Oil & Gas" maxlength="150" />
+    {% if errors.industry %}
+      <div class="invalid-feedback">{{ errors.industry }}</div>
+    {% endif %}
+  </div>
+
+  <div id="as-metrics-section" class="mt-4 p-3 border rounded bg-light d-none">
+    <h6 class="mb-3">Company Metrics (from yfinance)</h6>
+    <div class="text-muted small" id="as-metrics-status">Enter a symbol above to load metrics.</div>
+    <div class="row g-3" id="as-metrics-grid">
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">Market Cap</div>
+            <div class="fw-semibold" id="as-metric-market_cap">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">P/E (Trailing)</div>
+            <div class="fw-semibold" id="as-metric-trailing_pe">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">Revenue</div>
+            <div class="fw-semibold" id="as-metric-total_revenue">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">Net Profit</div>
+            <div class="fw-semibold" id="as-metric-net_income">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">ROE</div>
+            <div class="fw-semibold" id="as-metric-return_on_equity">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">Debt / Equity</div>
+            <div class="fw-semibold" id="as-metric-debt_to_equity">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">Dividend Yield</div>
+            <div class="fw-semibold" id="as-metric-dividend_yield">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-metric h-100">
+          <div class="card-body py-2">
+            <div class="small text-muted">52-Week High</div>
+            <div class="fw-semibold" id="as-metric-fifty_two_week_high">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-2" id="as-metrics-spinner" class="d-none">
+      <div class="d-flex align-items-center gap-2">
+        <div class="as-spinner" aria-hidden="true"></div>
+        <span class="small">Fetching metrics…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Add stock</button>
+    <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+  import { fetchCompanyMetrics } from "{% static 'js/api.js' %}";
+  const form = document.getElementById("as-add-company-form");
+  const symbolInput = form.querySelector('input[name="nse_code"]');
+  const metricsSection = document.getElementById("as-metrics-section");
+  const metricsStatus = document.getElementById("as-metrics-status");
+  const metricsSpinner = document.getElementById("as-metrics-spinner");
+  const metricEls = {};
+  document.querySelectorAll("[id^='as-metric-']").forEach((el) => {
+    metricEls[el.id.replace("as-metric-", "")] = el;
+  });
+
+  let debounceTimer;
+  async function fetchMetrics(symbol) {
+    metricsSection.classList.remove("d-none");
+    metricsSpinner.classList.remove("d-none");
+    metricsStatus.textContent = "Fetching metrics…";
+    Object.values(metricEls).forEach((el) => { el.textContent = "—"; });
+    try {
+      const data = await fetchCompanyMetrics(symbol);
+      metricsSpinner.classList.add("d-none");
+      const m = data.metrics || data;
+      const fmt = (v, suffix = "") => v == null ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 }) + suffix;
+      metricEls["market_cap"].textContent = fmt(m.market_cap);
+      metricEls["trailing_pe"].textContent = fmt(m.trailing_pe);
+      metricEls["total_revenue"].textContent = fmt(m.total_revenue);
+      metricEls["net_income"].textContent = fmt(m.net_income);
+      metricEls["return_on_equity"].textContent = fmt(m.return_on_equity, "%");
+      metricEls["debt_to_equity"].textContent = fmt(m.debt_to_equity);
+      metricEls["dividend_yield"].textContent = fmt(m.dividend_yield, "%");
+      metricEls["fifty_two_week_high"].textContent = fmt(m.fifty_two_week_high);
+      metricsStatus.textContent = "Metrics loaded.";
+      metricsStatus.className = "text-success small";
+    } catch (error) {
+      metricsSpinner.classList.add("d-none");
+      metricsStatus.textContent = "Metrics unavailable.";
+      metricsStatus.className = "text-danger small";
+    }
+  }
+
+  symbolInput.addEventListener("blur", (event) => {
+    const symbol = event.target.value.trim().toUpperCase();
+    if (!symbol || symbol.length < 1) {
+      return;
+    }
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => fetchMetrics(symbol), 400);
+  });
+</script>
+{% endblock %}

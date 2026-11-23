@@ -1,0 +1,1277 @@
+---
+name: code-writing-style
+description: Use for ANY coding task from start to finish — new features, bug fixes, refactors, and reviews. One complete workflow covering design approval, SOLID/DRY principles, root-cause debugging, simplification, and the merge-quality gate. Use before writing code, while designing a class or function, when something breaks, when working code feels messy, and before anything is considered done.
+---
+
+# Code Writing Style
+
+Complete end-to-end coding workflow in five parts. Each part owns a phase;
+together they cover a task from "someone asks for something" to "the change
+is merged." No part repeats another's content — cross-references point to
+the part that owns a topic instead of restating it.
+
+**How the parts fit together:**
+
+```
+Part 1: BRAINSTORMING       → turn a request into an approved design
+         (design/approval gate)
+              │
+              ▼
+Part 2: SOLID + DRY DESIGN  → shape that design correctly, avoid duplication
+         (used DURING Part 1's design and DURING Part 3's implementation)
+              │
+              ▼
+        [implement]
+              │
+      ┌───────┴────────┐
+      ▼                ▼
+Part 3: DEBUGGING    (code works, but is messy)
+   (something broke)       │
+      │                    ▼
+      │             Part 4: SIMPLIFICATION
+      │                    │
+      └──────────┬─────────┘
+                  ▼
+         Part 5: CODE REVIEW
+         (the merge gate — everything passes through here)
+```
+
+## Part 0: Routing — Which Part Applies
+
+Check this before writing, editing, or deleting any code. State in one line
+which part you're starting with.
+
+| Task looks like... | Start at | Then |
+|---|---|---|
+| "Build X", "add a feature", "create a...", any new capability | **Part 1** | Approved → Part 2 informs the design → implement → Part 5 |
+| "Fix this bug", failing test, exception, unexpected output, "why does X happen" | **Part 3** | Root cause found → minimal fix → Part 5 |
+| "This works but is messy/hard to read/too complex" | **Part 4** | After simplifying → Part 5 |
+| "Review this", "is this good", ready to merge | **Part 5** | Findings addressed → re-review if Critical/Required |
+| Structuring a class/module, choosing a pattern, a function growing extra parameters | **Part 2** | Feeds back into whichever part is active — not a standalone entry point |
+| Pure question, read-only investigation | none | Answer directly; re-check this table the moment it becomes a code change |
+
+**Ordering rules when tasks overlap:**
+
+1. Design gates (Part 1) come before design content (Part 2) — Part 2 informs what gets proposed inside Part 1's gate, it doesn't bypass it.
+2. A bug found mid-implementation or mid-review routes to Part 3, not back to Part 1 — root-cause and fix the specific defect, then resume.
+3. A structural finding during Part 5 routes to Part 2's remedies or GoF table, not back to Part 1 — unless it's large enough to be a genuine redesign (see rule 4).
+4. Hidden complexity discovered mid-task upgrades the design path (see Part 1's ratchet rule) — stop, say so, re-run this table.
+5. Part 4 never substitutes for Part 5 — simplifying is optional pre-review cleanup; every change still goes through the merge gate.
+6. 3+ failed fix attempts in Part 3 pause debugging for an architecture discussion (Part 3, Phase 4.5) — this may route back to Part 1 if the conclusion is a genuine redesign.
+
+---
+
+# Part 1: Brainstorming — Design & Approval
+
+**Owns:** turning an idea into an approved design before any implementation starts.
+
+<HARD-GATE>
+Do NOT invoke Part 2's implementation consequences, write code, scaffold a
+project, or take any implementation action until you have told the human
+what you intend and they have approved it. This applies to every task on
+every path below — the ceremony scales with the task; the approval gate
+never does.
+</HARD-GATE>
+
+## Three Paths
+
+Classify the request out loud before the first question, so the human can
+override it:
+
+- **Spike** — a feasibility question ("can we...", "is it possible...")
+  whose output is an answer, not code you keep. Present the question and
+  probe plan in 2-3 sentences, get a nod, investigate as cheaply as
+  correctness allows, report findings. No design doc.
+- **Bounded** — a well-scoped change to code that already exists in this
+  repo: a new flag, a small endpoint, a one-file fix. If there's no
+  existing flow to change, it's not bounded. Ask clarifying questions,
+  present a short design IN CHAT (a few sentences to a few short
+  paragraphs), STOP, get an explicit yes, then implement via the normal
+  workflow (Parts 2-5 as applicable). No spec file.
+- **Architectural** — new projects, new subsystems, changes that
+  restructure how components fit together or alter interfaces others
+  depend on. Full process below.
+
+When in doubt between two paths, take the heavier one. The ratchet is
+one-way: hidden complexity discovered mid-task upgrades the path — stop,
+say so, step up. Nothing downgrades mid-task.
+
+**Anti-pattern:** "Too simple to need approval." Every path ends with the
+human approving intent before implementation. A todo list, a single-function
+utility, a config change — the design may be two sentences in chat, but it
+still needs to be presented and approved.
+
+## Checklist by Path
+
+**Spike:** explore context → present question + probe (2-3 sentences) →
+get approval → investigate → report recommendation (label anything built
+as throwaway).
+
+**Bounded:** explore context (files, docs, recent commits) → ask
+clarifying questions one at a time → present short design in chat
+(approach, files touched, testing) → STOP for explicit yes → implement
+(normal workflow, TDD applies, no plan document).
+
+**Architectural:**
+1. Explore project context
+2. Offer the visual companion just-in-time (see below) — never upfront
+3. Ask clarifying questions one at a time — purpose, constraints, success criteria
+4. Propose 2-3 approaches with trade-offs, lead with your recommendation
+5. Present design in sections scaled to complexity (a few sentences to 200-300 words each), get approval after each section
+6. Write design doc to `docs/specs/YYYY-MM-DD-<topic>-design.md`, commit it
+7. Spec self-review (see below), fix inline
+8. Human reviews the written spec
+9. Transition to implementation (Parts 2-5)
+
+**If the project is too large for a single spec** (multiple independent
+subsystems), flag this immediately and help decompose into sub-projects
+before refining details of any one piece. Each sub-project gets its own
+cycle through this whole workflow.
+
+## Exploring Approaches (architectural path)
+
+Propose 2-3 approaches conversationally, trade-offs and your recommendation
+first. YAGNI ruthlessly — remove unnecessary features from every approach.
+
+## Presenting the Design
+
+Cover architecture, components, data flow, error handling, testing. Ask
+after each section whether it looks right. Design for isolation: each unit
+should have one clear purpose, a well-defined interface, and be
+understandable without reading its internals — if a change to one unit's
+internals breaks its consumers, or you can't say what it does without
+reading it, the boundaries need work (this is Part 2's Single
+Responsibility Principle applied at the module level — see Part 2 rather
+than re-deriving it here).
+
+**Working in existing codebases:** explore structure before proposing
+changes, follow existing patterns. If existing code has problems that
+affect this work (a file too large, tangled responsibilities), include
+targeted improvements in the design — but don't propose unrelated
+refactoring. Stay focused on what serves the current goal.
+
+## Spec Self-Review (architectural path)
+
+After writing the spec, check with fresh eyes:
+
+1. **Placeholder scan** — any "TBD", "TODO", incomplete sections, vague requirements? Fix them.
+2. **Internal consistency** — do sections contradict each other?
+3. **Scope check** — focused enough for one implementation plan, or does it need decomposition?
+4. **Ambiguity check** — could any requirement be read two ways? Pick one, make it explicit.
+
+Fix issues inline, no need to re-review — fix and move on.
+
+## Visual Companion
+
+A browser-based companion for mockups, diagrams, and visual options. Not a
+mode — a tool. Offer it **just-in-time**, never upfront: the first time a
+question would genuinely be clearer shown than described, offer it as its
+own message with nothing else in it:
+
+> "This next part might be easier if I show you — I can put together
+> mockups, diagrams, and comparisons in a browser tab as we go. Want me to?"
+
+Per question after acceptance, decide: would the human understand this
+better by seeing it than reading it? Visual → mockups, wireframes, layout
+comparisons, architecture diagrams. Terminal → requirements questions,
+conceptual choices, tradeoff lists, scope decisions. A UI *topic* is not
+automatically a visual *question* — "what does personality mean in this
+context" is conceptual (terminal); "which wizard layout works better" is
+visual (browser).
+
+## Red Flags (Part 1)
+
+| Thought | Reality |
+|---|---|
+| "This is too simple to need a design" | Simple means a short design, not no design. |
+| "I'll call it bounded and skip the spec" | Reaching for a label to skip work IS the doubt — take the heavier path. |
+| "It's bounded, I'll start while they read the design" | The gate is the approval, not the design's length. Stop until you hear yes. |
+| "The spike works, I'll keep the code" | A spike's output is an answer. Keeping the code is a new request — classify it. |
+| "It grew, but I'm almost done" | Hidden complexity upgrades the path mid-task. Stop and say so. |
+
+---
+
+# Part 2: SOLID + DRY Design
+
+**Owns:** where responsibility should live, when to extract vs. duplicate,
+and which design pattern (if any) fits. Used *during* Part 1's design and
+*during* implementation — not a standalone entry point.
+
+## When to Use
+
+Starting a new class/module/function; a function picking up a third+
+parameter (especially booleans); logic that "feels familiar"; extending a
+class with `isinstance`/`type ==` branches instead of polymorphism;
+structuring a feature with several variants (payment methods, notification
+channels, export formats).
+
+**When not to:** prototypes/spikes (Part 1) before they graduate to real
+code; a codebase small enough that abstraction costs more than the
+duplication it prevents; before you understand the problem well enough to
+know the right boundaries (write the concrete version first, abstract from
+2-3 real examples, not from imagination).
+
+## The Five Principles (SOLID)
+
+### S — Single Responsibility
+
+**One reason to change.** *Trigger:* you describe a class using "and"; you
+edit a class for a business-logic reason and also touch its formatting,
+persistence, or logging in the same edit.
+
+```python
+# VIOLATES: parsing, validation, AND persistence in one class
+class OrderProcessor:
+    def process(self, raw_order: str):
+        data = json.loads(raw_order)
+        if not data.get("items"):
+            raise ValueError("Order must have items")
+        conn = sqlite3.connect("orders.db")
+        conn.execute("INSERT INTO orders VALUES (?)", (raw_order,))
+        conn.commit()
+        return data
+
+# FOLLOWS: each class owns one reason to change
+class OrderParser:
+    def parse(self, raw_order: str) -> dict:
+        return json.loads(raw_order)
+
+class OrderValidator:
+    def validate(self, order: dict) -> None:
+        if not order.get("items"):
+            raise ValueError("Order must have items")
+
+class OrderRepository:
+    def save(self, order: dict) -> None:
+        conn = sqlite3.connect("orders.db")
+        conn.execute("INSERT INTO orders VALUES (?)", (json.dumps(order),))
+        conn.commit()
+
+class OrderProcessor:
+    def __init__(self, parser, validator, repository):
+        self._parser, self._validator, self._repository = parser, validator, repository
+
+    def process(self, raw_order: str) -> dict:
+        order = self._parser.parse(raw_order)
+        self._validator.validate(order)
+        self._repository.save(order)
+        return order
+```
+
+Don't over-apply: a five-line function that parses *and* returns a value
+isn't two responsibilities. SRP is about independent axes of change, not
+line count.
+
+```cpp
+// VIOLATES SRP: parsing, validation, AND persistence in one class
+class OrderProcessor {
+public:
+    Order process(const std::string& raw_order) {
+        Order order = parse(raw_order);              // parsing
+        if (order.items.empty())                      // validation
+            throw std::invalid_argument("Order must have items");
+        std::ofstream out("orders.db", std::ios::app); // persistence
+        out << raw_order << "\n";
+        return order;
+    }
+private:
+    Order parse(const std::string& raw_order) { /* ... */ }
+};
+
+// FOLLOWS SRP: each class owns one reason to change
+class OrderParser {
+public:
+    Order parse(const std::string& raw_order) { /* ... */ }
+};
+
+class OrderValidator {
+public:
+    void validate(const Order& order) {
+        if (order.items.empty())
+            throw std::invalid_argument("Order must have items");
+    }
+};
+
+class OrderRepository {
+public:
+    void save(const Order& order) {
+        std::ofstream out("orders.db", std::ios::app);
+        out << order.serialize() << "\n";
+    }
+};
+
+class OrderProcessor {
+public:
+    OrderProcessor(OrderParser& parser, OrderValidator& validator, OrderRepository& repo)
+        : parser_(parser), validator_(validator), repo_(repo) {}
+
+    Order process(const std::string& raw_order) {
+        Order order = parser_.parse(raw_order);
+        validator_.validate(order);
+        repo_.save(order);
+        return order;
+    }
+private:
+    OrderParser& parser_;
+    OrderValidator& validator_;
+    OrderRepository& repo_;
+};
+```
+
+### O — Open/Closed
+
+**Open for extension, closed for modification.** *Trigger:* an
+`if/elif`/`switch` chain branching on type/category, where every new case
+means editing that function again.
+
+```typescript
+// VIOLATES: every new shape means editing calculateArea again
+function calculateArea(shape: { kind: string; [k: string]: any }): number {
+  if (shape.kind === "circle") return Math.PI * shape.radius ** 2;
+  if (shape.kind === "rectangle") return shape.width * shape.height;
+  throw new Error(`Unknown shape: ${shape.kind}`);
+}
+
+// FOLLOWS: new shapes are added, existing code is untouched
+interface Shape { area(): number; }
+class Circle implements Shape {
+  constructor(private radius: number) {}
+  area() { return Math.PI * this.radius ** 2; }
+}
+class Rectangle implements Shape {
+  constructor(private width: number, private height: number) {}
+  area() { return this.width * this.height; }
+}
+function totalArea(shapes: Shape[]): number {
+  return shapes.reduce((sum, s) => sum + s.area(), 0);
+}
+```
+
+Don't over-apply: a two-branch `if/else` that will realistically never grow
+a third case doesn't need a hierarchy. OCP earns its cost when new cases
+are a recurring, expected kind of change (see GoF table below).
+
+```cpp
+// VIOLATES OCP: every new shape means editing calculateArea again
+double calculateArea(const std::string& kind, double a, double b) {
+    if (kind == "circle") return M_PI * a * a;
+    if (kind == "rectangle") return a * b;
+    throw std::invalid_argument("Unknown shape: " + kind);
+}
+
+// FOLLOWS OCP: new shapes are added, existing code is untouched
+class Shape {
+public:
+    virtual double area() const = 0;
+    virtual ~Shape() = default;
+};
+
+class Circle : public Shape {
+public:
+    explicit Circle(double radius) : radius_(radius) {}
+    double area() const override { return M_PI * radius_ * radius_; }
+private:
+    double radius_;
+};
+
+class Rectangle : public Shape {
+public:
+    Rectangle(double width, double height) : width_(width), height_(height) {}
+    double area() const override { return width_ * height_; }
+private:
+    double width_, height_;
+};
+
+// Adding Triangle later touches zero existing code.
+double totalArea(const std::vector<std::unique_ptr<Shape>>& shapes) {
+    double sum = 0;
+    for (const auto& s : shapes) sum += s->area();
+    return sum;
+}
+```
+
+### L — Liskov Substitution
+
+**A subtype must be usable anywhere its base type is expected, without the
+caller needing to know which one it got.** *Trigger:* `isinstance(x,
+SpecificSubclass)` checks before calling a method, or a subclass overriding
+a method to raise `NotImplementedError` for cases the base type promised
+to handle.
+
+```python
+# VIOLATES: Penguin breaks the Bird contract callers rely on
+class Bird:
+    def fly(self): return "flying"
+class Penguin(Bird):
+    def fly(self): raise NotImplementedError("Penguins can't fly")
+
+# FOLLOWS: the base type only promises what every subtype can do
+class Bird:
+    def move(self): raise NotImplementedError
+class FlyingBird(Bird):
+    def move(self): return "flying"
+class Penguin(Bird):
+    def move(self): return "swimming"
+```
+
+If callers need `isinstance` checks to use your hierarchy safely, the
+hierarchy is wrong — fix the type boundary, don't add more checks.
+
+### I — Interface Segregation
+
+**Don't force a class to depend on methods it doesn't use.** *Trigger:* an
+interface where some implementers stub out methods with `pass` or
+`NotImplementedError`.
+
+```typescript
+// VIOLATES: a read-only report forced to implement write()
+interface DataSource { read(): string; write(data: string): void; delete(): void; }
+class ReadOnlyReport implements DataSource {
+  read() { return "report data"; }
+  write(_: string): void { throw new Error("Not supported"); }
+  delete(): void { throw new Error("Not supported"); }
+}
+
+// FOLLOWS: split by capability, implement only what applies
+interface Readable { read(): string; }
+interface Writable { write(data: string): void; }
+interface Deletable { delete(): void; }
+class ReadOnlyReport implements Readable {
+  read() { return "report data"; }
+}
+```
+
+### D — Dependency Inversion
+
+**Depend on abstractions, not concrete implementations.** *Trigger:* a
+business-logic class directly instantiates concrete infrastructure (a
+specific DB driver, HTTP client, file writer) instead of receiving an
+interface.
+
+```python
+# VIOLATES: OrderService is hard-wired to PostgresDatabase
+class PostgresDatabase:
+    def save(self, record: dict) -> None: ...
+class OrderService:
+    def __init__(self):
+        self.db = PostgresDatabase()   # can't test, can't swap
+
+# FOLLOWS: OrderService depends on an abstraction
+from typing import Protocol
+class Database(Protocol):
+    def save(self, record: dict) -> None: ...
+class OrderService:
+    def __init__(self, db: Database):
+        self.db = db   # Postgres, SQLite, or a test double all work
+
+    def place_order(self, order: dict):
+        self.db.save(order)
+```
+
+Don't over-apply: injecting an interface for something with exactly one
+implementation that will only ever have one is ceremony without payoff.
+DIP earns its cost at real seams — I/O, external services, anything you'll
+swap or fake in tests.
+
+```cpp
+// VIOLATES DIP: OrderService is hard-wired to PostgresDatabase
+class PostgresDatabase {
+public:
+    void save(const Order& record) { /* ... */ }
+};
+class OrderService {
+public:
+    OrderService() : db_(std::make_unique<PostgresDatabase>()) {}  // can't swap, can't mock
+private:
+    std::unique_ptr<PostgresDatabase> db_;
+};
+
+// FOLLOWS DIP: OrderService depends on an abstraction
+class Database {
+public:
+    virtual void save(const Order& record) = 0;
+    virtual ~Database() = default;
+};
+class OrderService {
+public:
+    explicit OrderService(std::shared_ptr<Database> db) : db_(std::move(db)) {}
+    void placeOrder(const Order& order) { db_->save(order); }
+private:
+    std::shared_ptr<Database> db_;   // Postgres, SQLite, or a test double all work
+};
+```
+
+**C-specific note (no classes/interfaces):** the same principle applies via
+function pointers or a `struct` of function pointers passed in, rather than
+a module calling a hardcoded function directly:
+
+```c
+/* VIOLATES DIP: order_service.c calls postgres_save() directly — can't test, can't swap */
+void place_order(Order *order) {
+    postgres_save(order);
+}
+
+/* FOLLOWS DIP: the save function is passed in, not hardcoded */
+typedef struct {
+    void (*save)(const Order *order);
+} Database;
+
+void place_order(const Database *db, Order *order) {
+    db->save(order);   /* Postgres, SQLite, or a test stub all work */
+}
+```
+
+## DRY, Done Right
+
+**DRY is about knowledge, not code that looks similar.** This is the
+single most common misapplication — over-applying DRY produces its own
+bloat: shared helpers serving unrelated callers that happen to look alike
+today and will diverge tomorrow.
+
+```python
+# These LOOK like duplication...
+def validate_username(name: str) -> bool:
+    return 3 <= len(name) <= 20
+def validate_product_code(code: str) -> bool:
+    return 3 <= len(code) <= 20
+
+# ...but merging them is WRONG — different business rules that happen
+# to share a number today. A username's length rule and a product code's
+# length rule are different knowledge that will change for different
+# reasons. Merging means one change silently breaks the other's rule.
+```
+
+Compare: two places computing someone's age from a birth date **are** the
+same knowledge — that belongs in one function, because when the
+definition changes, it must change in exactly one place for both callers.
+
+**The test:** if this logic changes, should every place it's copied change
+*for the same reason, at the same time*? Yes → extract it. No (same shape,
+different reason to change) → leave it duplicated.
+
+### The Rule of Three
+
+Don't extract after the *first* duplication; be cautious even after the
+second. Wait for a genuine third occurrence — or high confidence the
+second is the same knowledge — before creating a shared function, base
+class, or module. Extracting from one example produces an abstraction
+shaped like that one example, which usually needs reshaping the moment a
+different second case arrives.
+
+## Duplication-Prevention Checklist
+
+The mechanical step that makes "avoid duplication" actionable — run this
+**before** writing a new function, class, or module:
+
+```
+1. SEARCH FIRST
+   - grep/search the codebase for the domain term before writing a new
+     implementation
+   - Check for an existing utils/, helpers/, common/, shared/ module
+   - Check the module that owns this concept
+
+2. IF SOMETHING SIMILAR EXISTS, ASK:
+   - Same knowledge, or coincidental resemblance? (DRY test above)
+   - Can the existing function be reused as-is, or with a parameter
+     (without becoming a boolean-flag grab bag)?
+   - Does it need a genuine variant — overload, subtype, or strategy
+     (see GoF table), not a copy?
+
+3. IF NOTHING EXISTS:
+   - First occurrence → write the concrete version inline, don't
+     pre-abstract (YAGNI, below)
+   - Second occurrence of near-identical logic → note it, extract only
+     if confident it's the same knowledge
+   - Third occurrence → extract now (Rule of Three)
+
+4. NAME IT FOR WHAT IT MEANS, NOT WHERE IT'S USED
+   - calculateShippingCost(), not calculateCost2() or
+     calculateCostForCheckoutPage()
+   - A name scoped to one call site signals the function is about to be
+     duplicated at the next call site instead of reused
+```
+
+### The "Bloated Function" Smell
+
+Duplication and bloat are two sides of one coin — avoiding duplication by
+stuffing every variant into one function creates the opposite problem.
+
+```typescript
+// BLOATED: avoided duplication by adding a flag for every variant
+function sendNotification(
+  message: string, isUrgent: boolean, isEmail: boolean,
+  isSms: boolean, skipQuietHours: boolean, retryOnFailure: boolean,
+) { /* 80 lines branching on every flag combination */ }
+
+// SIMPLE: one function per channel, shared core for real shared knowledge
+interface Notifier { send(message: string, options: { urgent: boolean }): void; }
+class EmailNotifier implements Notifier { send(message, options) { /* ... */ } }
+class SmsNotifier implements Notifier { send(message, options) { /* ... */ } }
+```
+
+A function with three or more boolean parameters is almost always hiding
+distinct behaviors that should be separate functions, a strategy, or a
+clearly-named options object — not more flags on the pile.
+
+## YAGNI: The Boundary
+
+**You Aren't Gonna Need It.** Every principle above is as much a reason to
+*not* write something yet as a reason to extract it now:
+
+- Don't build a plugin system for one plugin
+- Don't add a config option nobody asked for "in case it's needed"
+- Don't create an interface with one implementation and no planned second
+- Don't add a generic `options: Record<string, any>` "for flexibility" —
+  that defers duplication-of-effort onto every future caller
+
+SOLID tells you **where** a responsibility should live once it exists.
+YAGNI tells you **whether** it should exist yet. Build the concrete thing
+for the case in front of you, shaped so a real second case is easy to add
+(open/closed) — but don't build the extension point speculatively.
+
+## GoF Pattern Decision Table
+
+Go symptom → pattern, never pattern → excuse. A pattern around a single
+concrete case is pure indirection with no payoff.
+
+| Symptom | Pattern | Why it fits | Common misuse |
+|---|---|---|---|
+| Object creation duplicated across call sites, or the concrete class depends on a runtime condition | **Factory** | Centralizes "which concrete class" in one place | Wrapping a single `new X()` "for consistency" |
+| A family of interchangeable behaviors swapped at runtime (sort order, pricing, payment method) | **Strategy** | Each variant is its own class behind one interface; adding one doesn't touch others | Using it for two variants that will never become three — an `if/else` is simpler |
+| Multiple parts must react to one object's state changes, subject shouldn't know who's listening | **Observer** | Decouples event source from consumers | Using it for a single fixed listener — a direct call is simpler |
+| An existing interface doesn't match what calling code expects (often 3rd-party) | **Adapter** | Isolates the mismatch in one place | Adapting your own code to itself — change one side instead |
+| Behavior added to individual objects at runtime without subclassing every combination | **Decorator** | Avoids a combinatorial explosion of subclasses | Using it when a simple optional parameter would do |
+| A complex subsystem needs one simple entry point for common cases | **Facade** | Small, stable surface over volatile internals | Making it the *only* way in, blocking power users from subsystem detail |
+| A tree of part-whole hierarchies needs uniform treatment | **Composite** | Leaf and branch treated identically | Forcing it onto a flat list that will never nest |
+| Several classes share an algorithm but differ in specific steps | **Template Method** | Shared skeleton in one place, subclasses override only what varies | Using it when "shared" is only shared by two classes and already diverging |
+| Construction has many optional parameters, invalid partial states possible | **Builder** | Readable construction, prevents invalid intermediate states | Building one for a 2-3 field object — named args are simpler |
+| Exactly one instance must exist, global access genuinely required | **Singleton** | Rarely — see note | Nearly always reached out of habit; hides a dependency instead of declaring it (violates DIP). Prefer passing the instance explicitly. |
+
+**On Singleton specifically:** last resort, not a default. Shared
+config/connection pools are usually better as one object constructed once
+at startup and passed to whatever needs it.
+
+## Red Flags (Part 2)
+
+- Function with 3+ boolean parameters
+- `isinstance`/`typeof`/`instanceof` branching that should have been polymorphism
+- `new ConcreteClass()` inside business logic with no test double possible
+- Interface where implementers throw `NotImplementedError` for unsupported methods
+- Writing a new helper without searching for an existing one first
+- A shared "utils" function growing feature-specific branches per caller
+- A pattern introduced with only one concrete case in sight
+- A Singleton introduced for convenience, not a genuine single-instance requirement
+- An abstraction extracted after exactly one occurrence
+
+---
+
+# Part 3: Systematic Debugging
+
+**Owns:** root-causing any bug, test failure, or unexpected behavior before
+attempting a fix.
+
+## The Iron Law
+
+```
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+```
+
+Use for ANY technical issue — test failures, production bugs, unexpected
+behavior, performance problems, build failures, integration issues.
+Especially under time pressure, when "just one quick fix" seems obvious,
+after previous fixes didn't work, or when the issue seems simple (simple
+bugs have root causes too).
+
+## Phase 1: Root Cause Investigation
+
+**Before attempting any fix:**
+
+1. **Read error messages carefully** — stack traces completely, line
+   numbers, file paths, error codes. They often contain the exact solution.
+2. **Reproduce consistently** — can you trigger it reliably? If not
+   reproducible, gather more data, don't guess.
+3. **Check recent changes** — git diff, recent commits, new dependencies,
+   config/environment differences.
+4. **Gather evidence in multi-component systems** — add diagnostic
+   instrumentation at each component boundary (log what enters/exits, verify
+   config propagation, check state at each layer) *before* proposing
+   fixes. Run once to see WHERE it breaks, then investigate that specific
+   component.
+5. **Trace data flow backward** — where does the bad value originate? What
+   called this with it? Keep tracing up until you find the source. Fix at
+   the source, not the symptom.
+
+## Phase 2: Pattern Analysis
+
+1. **Find working examples** — locate similar working code in the same
+   codebase.
+2. **Compare against references** — read a reference implementation
+   completely, not skimmed, before applying its pattern.
+3. **Identify every difference** between working and broken — don't
+   assume "that can't matter."
+4. **Understand dependencies** — what components, settings, environment,
+   assumptions does this need?
+
+## Phase 3: Hypothesis and Testing
+
+1. **Form a single hypothesis** — "I think X is the root cause because Y." Write it down, be specific.
+2. **Test minimally** — smallest possible change, one variable at a time.
+3. **Verify before continuing** — worked → Phase 4. Didn't → new
+   hypothesis, don't stack another fix on top.
+4. **When you don't know** — say "I don't understand X." Don't pretend.
+
+## Phase 4: Implementation
+
+1. **Create a failing test case first** — simplest reproduction, automated
+   if possible. Must exist before fixing.
+2. **Implement a single fix** — address the root cause, one change, no
+   "while I'm here" improvements, no bundled refactoring.
+3. **Verify the fix** — test passes now, no other tests broken, issue
+   actually resolved.
+4. **If the fix doesn't work** — STOP. Count attempts. Under 3 → return to
+   Phase 1 with new information. **3 or more → question the architecture
+   (step 5), don't attempt fix #4.**
+5. **3+ failed fixes = architectural problem, not a failed hypothesis.**
+   Pattern: each fix reveals new shared state/coupling elsewhere, each
+   requires "massive refactoring," each creates new symptoms elsewhere.
+   Stop and question whether the pattern is fundamentally sound before
+   attempting more fixes. This may route back to Part 1 for a genuine
+   redesign discussion.
+
+## Worked example: a "mysterious" exit code
+
+Concrete anchor for the phases above. A Docker build failed on
+`adduser --system --uid 1001 --gid app --no-create-home app` with
+`exit code: 51` and a full dump of `adduser --help`.
+
+- **Phase 1, read the error carefully** — 51 is not arbitrary: the adduser man
+  page defines it ("Incorrect number or order of command line parameters
+  detected"). The usage dump meant argument parsing, not filesystem failure.
+- **Phase 1, check recent changes** — an earlier guess (removing
+  `--disabled-password`) had changed nothing; treat that as unresolved, not as a
+  known fix. Investigate again rather than stacking another edit.
+- **Phase 2, find working examples** — official Debian-slim images
+  (node:*-slim) create their non-root user with `groupadd`/`useradd`, never
+  `adduser`; an sbt-native-packager issue showed the identical exit 51 from a
+  malformed `adduser` invocation on Debian trixie.
+- **Phase 3, single hypothesis** — the rewritten Debian `adduser` accepts only a
+  numeric ID for `--gid`; the name variant is `--ingroup`. `--gid app` violates
+  that. **Test minimally** — switch to the proven shadow-utils idiom
+  `groupadd --system --gid 1001 app && useradd --system --uid 1001 --gid app
+  --no-create-home app`.
+- **Phase 4, verify** — rebuild clean; no bundled refactors, no second fix.
+
+## Red Flags (Part 3)
+
+Catch yourself thinking any of these → STOP, return to Phase 1:
+
+- "Quick fix for now, investigate later"
+- "Just try changing X and see if it works"
+- "Add multiple changes, run tests"
+- "Skip the test, I'll manually verify"
+- "It's probably X, let me fix that"
+- "I don't fully understand but this might work"
+- "One more fix attempt" (when already tried 2+)
+- Each fix reveals a new problem in a different place
+- Proposing solutions before tracing data flow
+
+## Common Rationalizations (Part 3)
+
+| Excuse | Reality |
+|---|---|
+| "Issue is simple, don't need process" | Simple issues have root causes too. |
+| "Emergency, no time for process" | Systematic debugging is faster than guess-and-check thrashing. |
+| "Just try this first, then investigate" | The first fix sets the pattern — do it right from the start. |
+| "Multiple fixes at once saves time" | Can't isolate what worked; causes new bugs. |
+| "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
+
+## When No Root Cause Is Found
+
+If systematic investigation reveals the issue is truly environmental,
+timing-dependent, or external: document what was investigated, implement
+appropriate handling (retry, timeout, error message), add monitoring for
+future investigation. But 95% of "no root cause" cases are incomplete
+investigation — make sure Phase 1 was actually exhausted first.
+
+---
+
+# Part 4: Code Simplification
+
+**Owns:** reducing complexity in code that already works, without changing
+behavior.
+
+## When to Use
+
+After a feature works but feels heavier than it needs to be; during review
+when readability/complexity is flagged; deeply nested logic, long
+functions, unclear names; refactoring code written under time pressure;
+consolidating logic scattered across files.
+
+**When not to:** code is already clean (don't simplify for its own sake);
+you don't yet understand what the code does (comprehend first); the code
+is performance-critical and the simpler version would be measurably
+slower; you're about to rewrite the module entirely.
+
+## The Test
+
+Every simplification must pass: **"Would a new team member understand
+this faster than the original?"**
+
+## The Five Principles
+
+### 1. Preserve Behavior Exactly
+
+All inputs, outputs, side effects, error behavior, and edge cases stay
+identical. Before every change: does this produce the same output for
+every input? Same error behavior? Same side effects and ordering? Do
+existing tests still pass without modification?
+
+### 2. Follow Project Conventions
+
+Simplification means matching the codebase's own conventions, not
+imposing external preferences: import ordering, function declaration
+style, naming, error handling, type annotation depth. Simplification that
+breaks project consistency is churn, not simplification.
+
+### 3. Prefer Clarity Over Cleverness
+
+```typescript
+// UNCLEAR: dense ternary chain
+const label = isNew ? 'New' : isUpdated ? 'Updated' : isArchived ? 'Archived' : 'Active';
+
+// CLEAR: readable mapping
+function getStatusLabel(item: Item): string {
+  if (item.isNew) return 'New';
+  if (item.isUpdated) return 'Updated';
+  if (item.isArchived) return 'Archived';
+  return 'Active';
+}
+```
+
+### 4. Maintain Balance — Watch for Over-Simplification
+
+- Inlining too aggressively — removing a helper that named a concept makes the call site harder to read
+- Combining unrelated logic — two simple functions merged into one complex one is not simpler
+- Removing "unnecessary" abstraction that actually exists for extensibility or testability
+- Optimizing for line count instead of comprehension speed
+
+### 5. Scope to What Changed
+
+Default to simplifying recently modified code. Avoid drive-by refactors of
+unrelated code unless explicitly asked. Unscoped simplification creates
+noisy diffs and risks unintended regressions.
+
+## The Process
+
+1. **Understand before touching (Chesterton's Fence)** — what is this
+   code's responsibility, what calls it, what are the edge cases, are
+   there tests defining expected behavior, why might it have been written
+   this way? Check git blame. If you can't answer these, read more before
+   simplifying.
+
+2. **Identify opportunities** — concrete signals, not vague smells:
+   - **Structural:** deep nesting (3+ levels) → guard clauses; long
+     functions (50+ lines) → split by responsibility; nested ternaries →
+     if/else or lookup objects; boolean parameter flags → options objects
+     or separate functions; repeated conditionals → extract a predicate
+   - **Naming:** generic names (`data`, `temp`, `val`) → describe the
+     content; misleading names (a `get` that mutates) → rename to reflect
+     behavior; comments explaining "what" → delete (code should speak for
+     itself); comments explaining "why" → keep, they carry intent
+   - **Redundancy:** duplicated 5+ line blocks → extract shared function
+     (see Part 2's Rule of Three); dead code → remove after confirming
+     it's truly dead; unnecessary wrapper abstractions → inline; redundant
+     type assertions → remove
+
+3. **Apply incrementally** — one simplification at a time, run tests after
+   each. If tests pass, continue or commit. If tests fail, revert and
+   reconsider. Never batch multiple untested simplifications. **The Rule
+   of 500:** a refactor touching 500+ lines needs automation (codemods,
+   scripts), not manual edits.
+
+4. **Verify the result** — is the simplified version genuinely easier to
+   understand? Any new patterns inconsistent with the codebase? Is the
+   diff clean and reviewable? Would a teammate approve it? If harder to
+   understand, revert.
+
+## Language-Specific Patterns
+
+```python
+# SIMPLIFY: nested conditionals → early return
+# Before
+def process(data):
+    if data is not None:
+        if data.is_valid():
+            if data.has_permission():
+                return do_work(data)
+            else:
+                raise PermissionError("No permission")
+        else:
+            raise ValueError("Invalid data")
+    else:
+        raise TypeError("Data is None")
+
+# After
+def process(data):
+    if data is None:
+        raise TypeError("Data is None")
+    if not data.is_valid():
+        raise ValueError("Invalid data")
+    if not data.has_permission():
+        raise PermissionError("No permission")
+    return do_work(data)
+```
+
+```typescript
+// SIMPLIFY: unnecessary async wrapper
+// Before: async function getUser(id) { return await userService.findById(id); }
+// After:  function getUser(id) { return userService.findById(id); }
+
+// SIMPLIFY: manual array building → filter
+// Before: for (const user of users) { if (user.isActive) activeUsers.push(user); }
+// After:  const activeUsers = users.filter((user) => user.isActive);
+```
+
+```c
+/* SIMPLIFY: nested conditionals → early return (guard clauses) */
+/* Before */
+int process(Data *data) {
+    if (data != NULL) {
+        if (is_valid(data)) {
+            if (has_permission(data)) {
+                return do_work(data);
+            } else {
+                return ERR_PERMISSION;
+            }
+        } else {
+            return ERR_INVALID;
+        }
+    } else {
+        return ERR_NULL;
+    }
+}
+
+/* After */
+int process(Data *data) {
+    if (data == NULL) return ERR_NULL;
+    if (!is_valid(data)) return ERR_INVALID;
+    if (!has_permission(data)) return ERR_PERMISSION;
+    return do_work(data);
+}
+```
+
+```cpp
+// SIMPLIFY: manual owning pointer + manual delete → RAII / smart pointer
+// Before: leaks on every early return, and on exceptions
+Widget* makeWidget() {
+    Widget* w = new Widget();
+    if (!w->init()) { delete w; return nullptr; }  // easy to forget
+    return w;
+}
+
+// After: ownership is automatic, no manual delete, exception-safe
+std::unique_ptr<Widget> makeWidget() {
+    auto w = std::make_unique<Widget>();
+    if (!w->init()) return nullptr;   // destructor runs automatically
+    return w;
+}
+
+// SIMPLIFY: raw loop with index bookkeeping → range-based for
+// Before: for (size_t i = 0; i < items.size(); ++i) { process(items[i]); }
+// After:  for (const auto& item : items) { process(item); }
+```
+
+**C/C++-specific simplification signals** (in addition to the structural/
+naming/redundancy signals above): manual `malloc`/`free` or `new`/`delete`
+pairs that could be RAII (`unique_ptr`, `vector`, a destructor) — the
+"redundancy" and "dead code" categories above apply doubly here, since a
+missed `free` is a leak, not just clutter; raw pointers used for ownership
+where a smart pointer or reference would make the ownership explicit;
+macros used where a `const`/`constexpr`/inline function would be clearer
+and type-safe; C-style casts (`(int)x`) where `static_cast`/`const_cast`
+would make the intent explicit.
+
+## Common Rationalizations (Part 4)
+
+| Rationalization | Reality |
+|---|---|
+| "It's working, no need to touch it" | Hard-to-read working code will be hard to fix when it breaks. |
+| "Fewer lines is always simpler" | A 1-line nested ternary isn't simpler than a 5-line if/else. |
+| "I'll simplify this unrelated code too" | Unscoped simplification creates noisy diffs and risks regressions. Stay focused. |
+| "This abstraction might be useful later" | Speculative abstraction is complexity without value (see Part 2 YAGNI). Remove it, re-add when needed. |
+| "I'll refactor while adding this feature" | Separate refactoring from feature work — mixed changes are harder to review and revert. |
+
+## Red Flags (Part 4)
+
+- Simplification that requires modifying tests to pass (behavior likely changed)
+- "Simplified" code that's longer and harder to follow than the original
+- Renaming to match personal preference rather than project conventions
+- Removing error handling because "it's cleaner"
+- Simplifying code you don't fully understand
+- Batching many simplifications into one large, hard-to-review commit
+
+---
+
+# Part 5: Code Review & Quality
+
+**Owns:** the merge gate. Every change passes through here regardless of
+which earlier part(s) it came from.
+
+**Approval standard:** approve when a change definitely improves overall
+code health, even if imperfect. Don't block because it isn't exactly how
+you'd have written it.
+
+## The Five-Axis Review
+
+### 1. Correctness
+Matches spec/requirements? Edge cases handled (null, empty, boundary)?
+Error paths handled, not just the happy path? Tests actually test the
+right things? Any off-by-one errors, race conditions, state
+inconsistencies?
+
+### 2. Readability & Simplicity
+Names descriptive and consistent with conventions? Control flow
+straightforward? Organized logically? Any "clever" tricks that should be
+simplified (see Part 4)? Could this be fewer lines without losing clarity?
+Are abstractions earning their complexity (see Part 2 YAGNI — don't
+generalize until the third use case)? Dead code artifacts (`_unused`
+variables, backwards-compat shims, `// removed` comments)? Is a new
+conditional bolted onto an unrelated flow (design smell — push into its
+own helper, not tangled into an existing path)? Do repeated conditionals
+on the same shape appear (signals a missing model — see Part 2's GoF
+table)?
+
+### 3. Architecture
+Follows existing patterns, or is a new one justified? Clean module
+boundaries? Duplication that should be shared (Part 2's DRY test)?
+Dependencies flowing the right direction? Appropriate abstraction level?
+**Does this refactor reduce complexity or just relocate it?** — count the
+concepts a reader must hold; prefer restructuring that makes branches/
+modes/layers disappear over one that re-centralizes the same logic. Is
+feature-specific logic leaking into a shared module? Are type boundaries
+explicit — question gratuitous `any`/`unknown`/casts and silent fallbacks
+that paper over an unclear invariant.
+
+### 4. Security
+Input validated/sanitized? Secrets kept out of code, logs, VCS?
+Authentication/authorization checked where needed? SQL parameterized (no
+string concatenation)? Outputs encoded against XSS? Dependencies trusted,
+no known vulnerabilities? External data (APIs, logs, user content, config)
+treated as untrusted and validated at system boundaries?
+
+### 5. Performance
+N+1 query patterns? Unbounded loops or unconstrained data fetching?
+Synchronous operations that should be async? Unnecessary UI re-renders?
+Missing pagination on list endpoints? Large objects created in hot paths?
+
+## Structural Remedies
+
+Propose the move, not just the problem:
+
+- Replace a chain of conditionals with a typed model or explicit dispatcher
+- Collapse duplicate branches into one clearer flow
+- Separate orchestration from business logic
+- Move feature-specific logic out of a shared module into the package that owns the concept
+- Reuse the canonical helper instead of a bespoke near-duplicate
+- Make a type boundary explicit so downstream branching disappears
+- Delete a pass-through wrapper that adds indirection without clarifying the API
+- Extract a helper, or split a large file into focused modules
+
+(For pattern-shaped remedies specifically — a chain of conditionals that
+wants to become Strategy, a creation mess that wants to become Factory —
+consult Part 2's GoF Pattern Decision Table.)
+
+Prefer the remedy that removes moving pieces over one that spreads the
+same complexity around.
+
+## Change Sizing
+
+```
+~100 lines changed   → Good, reviewable in one sitting
+~300 lines changed   → Acceptable if a single logical change
+~1000 lines changed  → Too large, split it
+```
+
+Watch file size too, not just diff size — a small diff can push a file
+past ~1000 total lines, a common inspection signal. When a change
+materially grows an already-large file, decompose first, then add.
+
+**One change** = a single self-contained modification addressing one
+thing, with related tests, keeping the system functional after
+submission — one part of a feature, not the whole thing.
+
+**Splitting strategies:** Stack (small sequential changes), By file group
+(separate reviewers for cross-cutting concerns), Horizontal (shared
+code/stubs first, then consumers), Vertical (smaller full-stack feature
+slices).
+
+**Separate refactoring from feature work** — a change that refactors and
+adds behavior is two changes, submit separately.
+
+## Change Descriptions
+
+**First line:** short, imperative, standalone — "Delete the FizzBuzz RPC"
+not "Deleting the FizzBuzz RPC." Someone searching history should
+understand the change without reading the diff.
+
+**Body:** what's changing and why — context, decisions, reasoning not
+visible in the code. Link bugs/benchmarks/design docs. Acknowledge
+shortcomings.
+
+**Avoid:** "Fix bug," "Fix build," "Add patch," "Moving code from A to B," "Phase 1."
+
+## Review Process
+
+1. **Understand the context** — what is this trying to accomplish, what
+   spec/task does it implement, what's the expected behavior change?
+2. **Review tests first** — do they exist, test behavior not
+   implementation, cover edge cases, have descriptive names, would they
+   catch a regression?
+3. **Review implementation** against all five axes above, file by file.
+4. **Categorize findings** by severity:
+
+| Prefix | Meaning | Author Action |
+|---|---|---|
+| *(no prefix)* | Required change | Must address before merge |
+| **Critical:** | Blocks merge | Security, data loss, broken functionality |
+| **Nit:** | Minor, optional | May ignore |
+| **Optional:/Consider:** | Suggestion | Worth considering, not required |
+| **FYI** | Informational | No action needed |
+
+**Lead with what matters** — correctness and security first, then
+structural regressions and missed simplifications, then everything else.
+One structural problem beats ten nits for attention.
+
+5. **Verify the verification** — what tests were run, did the build pass,
+   was it tested manually, screenshots for UI changes, before/after
+   comparison?
+
+## Dead Code Hygiene
+
+After any refactor: identify unreachable/unused code, list it explicitly,
+**ask before deleting** — "Should I remove these now-unused elements:
+[list]?" Don't silently delete things you're not sure about.
+
+## Handling Disagreements
+
+Hierarchy: (1) technical facts/data override opinions, (2) style guides
+are absolute authority on style, (3) software design evaluated on
+engineering principles not personal preference, (4) codebase consistency
+acceptable if it doesn't degrade overall health.
+
+**Don't accept "I'll clean it up later."** Require cleanup before
+submission unless a genuine emergency; otherwise require filing a bug with
+self-assignment.
+
+## Honesty in Review
+
+Don't rubber-stamp ("LGTM" with no evidence of review). Don't soften real
+issues. Quantify problems when possible ("this N+1 will add ~50ms per item"
+beats "this could be slow"). Push back on approaches with clear problems —
+sycophancy is a review failure mode. Accept override gracefully if the
+author has full context and disagrees; comment on code, not people.
+
+## Dependency Discipline
+
+**Before adding any dependency:** does the existing stack already solve
+this? How large is it? Actively maintained? Known vulnerabilities
+(`npm audit`)? License compatible? Prefer standard library and existing
+utilities — every dependency is a liability.
+
+**Upgrading a dependency** is a code change like any other:
+1. Read the changelog, not just the version number — semver doesn't
+   guarantee no breakage
+2. One dependency per change — a bulk bump that breaks the build hides
+   which package did it
+3. Let tests decide — verified by a green suite before *and* after; thin
+   coverage around the dependency's behavior is itself a finding
+4. Mind the transitive graph — review the lockfile diff, not just the
+   manifest
+5. Keep the lockfile honest — commit it, review its diff, never hand-edit it
+
+## The Review Checklist
+
+```markdown
+### Correctness
+- [ ] Matches spec/task requirements
+- [ ] Edge cases handled
+- [ ] Error paths handled
+- [ ] Tests cover the change adequately
+
+### Readability
+- [ ] Names are clear and consistent
+- [ ] Logic is straightforward
+- [ ] No unnecessary complexity
+
+### Architecture
+- [ ] Follows existing patterns
+- [ ] No unnecessary coupling or dependencies
+- [ ] Refactors reduce complexity rather than relocate it
+- [ ] No feature logic in shared modules; file stays within a healthy size
+
+### Security
+- [ ] No secrets in code
+- [ ] Input validated at boundaries
+- [ ] No injection vulnerabilities
+- [ ] Auth checks in place
+- [ ] External data sources treated as untrusted
+
+### Performance
+- [ ] No N+1 patterns
+- [ ] No unbounded operations
+- [ ] Pagination on list endpoints
+
+### Verification
+- [ ] Tests pass
+- [ ] Build succeeds
+- [ ] Manual verification done (if applicable)
+
+### Verdict
+- [ ] Approve — ready to merge
+- [ ] Request changes — issues must be addressed
+```
+
+## Common Rationalizations (Part 5)
+
+| Rationalization | Reality |
+|---|---|
+| "It works, that's good enough" | Unreadable, insecure, or architecturally wrong code creates compounding debt. |
+| "I wrote it, so I know it's correct" | Authors are blind to their own assumptions. |
+| "We'll clean it up later" | Later never comes — require cleanup before merge. |
+| "The tests pass, so it's good" | Tests don't catch architecture, security, or readability problems. |
+| "The refactor makes it cleaner" | Relocating complexity isn't reducing it — look for the version where branches disappear. |
+| "It's just a version bump" | A bump is a behavior change you didn't write. Read the changelog. |
+
+## Red Flags (Part 5)
+
+- PRs merged without any review
+- Review that only checks if tests pass
+- "LGTM" without evidence of actual review
+- Security-sensitive changes without security-focused review
+- Large PRs "too big to review properly" (split them)
+- No regression tests with bug fix PRs
+- Review comments without severity labels
+- A refactor that moves code around without reducing the concepts a reader must hold
+- A change that grows an already-large file instead of decomposing it
+- New conditionals scattered into unrelated code paths
+- A bespoke helper duplicating an existing canonical one
+- A bulk "bump dependencies" PR with no changelog review
+
+---
+
+## Final Verification (all parts)
+
+Before any change is considered done:
+
+- [ ] A design was proposed and approved before implementation started (Part 1)
+- [ ] Each class/module can be described without using "and" (Part 2, SRP)
+- [ ] Adding a plausible new case means adding code, not editing an existing chain (Part 2, OCP)
+- [ ] No `isinstance` checks needed by callers to use a type safely (Part 2, LSP)
+- [ ] Duplicated-looking code passed the "same knowledge" test (Part 2, DRY)
+- [ ] The duplication-prevention search was actually run before new code was written (Part 2)
+- [ ] Every design pattern in use maps to a real symptom, not just a familiar name (Part 2, GoF)
+- [ ] Any bug was root-caused, not just patched at the symptom (Part 3)
+- [ ] A failing test existed before the fix (Part 3)
+- [ ] Simplification (if any) preserved behavior exactly and passed all existing tests unmodified (Part 4)
+- [ ] The change passed the five-axis review and all Critical/Required findings are resolved (Part 5)
+- [ ] The verification story is documented: what changed, how it was verified
